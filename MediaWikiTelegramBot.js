@@ -3,6 +3,9 @@ var request = require('request');
 var yaml = require('js-yaml');
 var fs = require('fs');
 
+var mode = 'fetching';
+var targetTranslatableMessageTitle = null;
+
 var config;
 
 // Get document, or throw exception on error
@@ -27,7 +30,7 @@ bot.onText( /\/echo (.+)/, function ( msg, match ) {
 
 bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
     var fromId = msg.from.id,
-        messageNumber = match[1];
+        translatableMessageNumber = match[1];
 
     request(
         'https://translatewiki.net/w/api.php?action=query&format=json&prop=&list=messagecollection&mcgroup=ext-0-wikimedia&mclanguage=he&mcfilter=!optional|!ignored|!translated',
@@ -43,13 +46,67 @@ bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
             console.log( 'messagecollection:' );
             console.log( body.query.messagecollection );
 
-            var messagecollection = body.query.messagecollection;
-            console.log( 'messagecollection[0].definition:' );
-            console.log( messagecollection[messageNumber].definition );
+            var messageCollection = body.query.messagecollection;
+            var targetTranslatableMessage =
+                messageCollection[translatableMessageNumber];
+            console.log( 'targetTranslatableMessage.definition:' );
+            console.log( targetTranslatableMessage.definition );
 
             if ( !error && response.statusCode === 200 ) {
-                bot.sendMessage( fromId, messagecollection[messageNumber].definition );
+                bot.sendMessage( fromId, targetTranslatableMessage.definition );
             }
+
+            mode = 'translation';
+            targetTranslatableMessageTitle = targetTranslatableMessage.title;
+        }
+    );
+} );
+
+bot.onText( /([^\/].*)/, function ( msg, match ) {
+    var fromId = msg.from.id,
+        chatMessage = match[1];
+
+    if ( mode !== 'translation' ||
+        targetTranslatableMessageTitle === null
+    ) {
+        return;
+    }
+
+    bot.sendMessage( fromId, 'Got translation "' + chatMessage +
+        '", getting token' );
+
+    request(
+        'https://translatewiki.net/w/api.php?action=query&format=json&prop=&meta=tokens&type=login',
+        function ( error, response, body ) {
+            if ( error || response.statusCode !== 200 ) {
+                bot.sendMessage( fromId, 'Error getting token' );
+                bot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
+                bot.sendMessage( fromId, 'error: ' + error );
+
+                return;
+            }
+
+            bot.sendMessage( fromId, 'Got token. Trying to authenticate' );
+            request(
+                'https://translatewiki.net/w/api.php?action=login&format=json&' +
+                    'lgname=' + config.username + '&' +
+                    'lgpassword=' + config.password + '&' +
+                    'lgtoken=' + body.query.tokens.logintoken,
+                function ( error, response, body ) {
+                    if ( error || response.statusCode !== 200 ) {
+                        bot.sendMessage( fromId, 'Error logging in' );
+                        bot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
+                        bot.sendMessage( fromId, 'error: ' + error );
+
+                        return;
+                    }
+
+                    bot.sendMessage( fromId, 'Logged in, how nice' );
+
+                    mode = 'fetching';
+                    targetTranslatableMessageTitle = null;
+                }
+            );
         }
     );
 } );
