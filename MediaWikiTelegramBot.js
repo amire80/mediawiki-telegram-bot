@@ -37,9 +37,16 @@ bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
             console.log( JSON.stringify( body, null, 2 ) );
             console.log( 'body.query.metadata:' );
             console.log( body.query.metadata );
+            console.log( 'messagecollection:' );
+            console.log( body.query.messagecollection );
+
+            var messagecollection = body.query.messagecollection;
+            console.log( 'messagecollection[0].definition:' );
+            console.log( messagecollection[0].definition );
+
 
             if ( !error && response.statusCode === 200 ) {
-                bot.sendMessage( JSON.stringify( body.query.metadata ) );
+                bot.sendMessage( messagecollection[0].definition );
             }
         }
     );
