@@ -1,0 +1,31 @@
+{
+  "name": "mediawiki-telegram-bot",
+  "version": "0.0.1",
+  "description": "A Telegram bot for editing MediaWiki pages",
+  "main": "MediaWikiTelegramBot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amire80/mediawiki-telegram-bot.git"
+  },
+  "keywords": [
+    "mediawiki",
+    "telegram",
+    "bot",
+    "chat",
+    "translation"
+  ],
+  "dependencies": {
+    "node-telegram-bot-api": "~0.21.1",
+    "request": "~2.69.0",
+    "js-yaml": "~3.5.5"
+  },
+  "author": "Amir E. Aharoni",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/amire80/mediawiki-telegram-bot/issues"
+  },
+  "homepage": "https://github.com/amire80/mediawiki-telegram-bot#readme"
+}
