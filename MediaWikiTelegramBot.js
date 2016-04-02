@@ -26,6 +26,8 @@ bot.onText( /\/echo (.+)/, function ( msg, match ) {
 } );
 
 bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
+    var fromId = msg.from.id;
+
     request(
         'https://translatewiki.net/w/api.php?action=query&format=json&prop=&list=messagecollection&mcgroup=ext-0-wikimedia&mclanguage=he&mcfilter=!optional|!ignored|!translated',
         function ( error, response, body ) {
@@ -46,7 +48,7 @@ bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
 
 
             if ( !error && response.statusCode === 200 ) {
-                bot.sendMessage( messagecollection[0].definition );
+                bot.sendMessage( fromId, messagecollection[0].definition );
             }
         }
     );
