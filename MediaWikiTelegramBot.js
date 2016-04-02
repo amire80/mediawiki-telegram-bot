@@ -39,7 +39,7 @@ bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
             console.log( body.query.metadata );
 
             if ( !error && response.statusCode === 200 ) {
-                bot.sendMessage( body.query.metadata );
+                bot.sendMessage( JSON.stringify( body.query.metadata ) );
             }
         }
     );
