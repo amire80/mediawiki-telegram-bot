@@ -27,7 +27,7 @@ bot.onText( /\/echo (.+)/, function ( msg, match ) {
 
 bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
     request(
-        'https://translatewiki.net/w/api.php?action=query&format=json&prop=&list=messagecollection&callback=&mcgroup=ext-0-wikimedia&mclanguage=he&mcfilter=!optional|!ignored|!translated',
+        'https://translatewiki.net/w/api.php?action=query&format=json&prop=&list=messagecollection&mcgroup=ext-0-wikimedia&mclanguage=he&mcfilter=!optional|!ignored|!translated',
         function ( error, response, body ) {
             body = JSON.parse( body );
 
