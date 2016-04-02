@@ -8,6 +8,7 @@ People without whom this wouldn't happen:
 * Bryan Davis
 * Marko Obrovac
 * Petr Bena
+* Brad Jorsch
 * Siebrand Mazeland
 * Niklas Laxström
 
