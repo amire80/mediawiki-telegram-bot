@@ -29,6 +29,7 @@ bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
     request(
         'https://translatewiki.net/w/api.php?action=query&format=json&prop=&list=messagecollection&callback=&mcgroup=ext-0-wikimedia&mclanguage=he&mcfilter=!optional|!ignored|!translated',
         function ( error, response, body ) {
+            console.log( JSON.stringify( response, null, 2 ) );
             if ( !error && response.statusCode === 200 ) {
                 bot.sendMessage( response.body.query.metadata );
             }
