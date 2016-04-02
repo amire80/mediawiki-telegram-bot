@@ -31,7 +31,7 @@ bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
         function ( error, response, body ) {
             console.log( JSON.stringify( response, null, 2 ) );
             if ( !error && response.statusCode === 200 ) {
-                bot.sendMessage( response.body.query.metadata );
+                bot.sendMessage( body.query.metadata );
             }
         }
     );
