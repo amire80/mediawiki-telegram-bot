@@ -30,7 +30,7 @@ bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
         'https://translatewiki.net/w/api.php?action=query&format=json&prop=&list=messagecollection&callback=&mcgroup=ext-0-wikimedia&mclanguage=he&mcfilter=!optional|!ignored|!translated',
         function ( error, response, body ) {
             if ( !error && response.statusCode === 200 ) {
-                bot.sendMessage( response ) // Show the HTML for the Google homepage.
+                bot.sendMessage( response.query.metadata );
             }
         }
     );
