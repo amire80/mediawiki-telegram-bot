@@ -7,10 +7,9 @@ var config;
 
 // Get document, or throw exception on error
 try {
-    var config = yaml.safeLoad(
+    config = yaml.safeLoad(
         fs.readFileSync( 'mediawiki-telegram-bot.config.yaml', 'utf8' )
     );
-    console.log( config );
 } catch ( e ) {
     console.log( e );
 }
