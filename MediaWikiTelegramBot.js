@@ -113,8 +113,52 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
 
                     bot.sendMessage( fromId, 'Logged in, how nice' );
 
-                    mode = 'fetching';
-                    targetTranslatableMessageTitle = null;
+                    bot.sendMessage( fromId, 'title: "' + targetTranslatableMessageTitle + '"' );
+
+                    bot.sendMessage( fromId, 'Getting CSRF token' );
+
+                    var mwEditTokenRequestUrl = 'https://translatewiki.net/w/api.php?action=query&format=json&meta=tokens&type=csrf';
+                    request(
+                        mwEditTokenRequestUrl,
+                        function ( error, response, body ) {
+                            bot.sendMessage( fromId, 'Edit token request over' );
+
+                            if ( error || response.statusCode !== 200 ) {
+                                bot.sendMessage( fromId, 'Error getting edit token' );
+                                bot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
+                                bot.sendMessage( fromId, 'error: ' + error );
+
+                                return;
+                            }
+
+                            body = JSON.parse( body );
+                            var mwEditToken = body.query.tokens.csrftoken;
+                            bot.sendMessage( fromId, 'Got edit token ' + mwEditToken );
+
+                            var editRequestUrl = 'https://translatewiki.net/w/api.php?action=edit&format=json&' +
+                                'title=' + targetTranslatableMessageTitle + '&' +
+                                'text=' + chatMessage + '&' +
+                                'summary=Made+with+Telegram+Bot&' +
+                                'token=' + mwEditToken;
+
+                            request( editRequestUrl, function ( error, response, body ) {
+                                bot.sendMessage( fromId, 'Edit request over' );
+
+                                if ( error || response.statusCode !== 200 ) {
+                                    bot.sendMessage( fromId, 'Error editing' );
+                                    bot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
+                                    bot.sendMessage( fromId, 'error: ' + error );
+
+                                    return;
+                                }
+
+                                bot.sendMessage( fromId, 'Looks like it worked!' );
+
+                                mode = 'fetching';
+                                targetTranslatableMessageTitle = null;
+                            } );
+                        }
+                    );
                 }
             );
         }
