@@ -7,31 +7,41 @@ var fs = require( 'fs' );
 
 var mode = 'fetching';
 var targetTranslatableMessageTitle = null;
+var apiUrl = 'https://translatewiki.net/w/api.php';
+
+var debugLevel = 0;
+
+var debug = function ( fromId, info ) {
+    if ( !debugLevel ) {
+        return;
+    }
+
+    tgBot.sendMessage( fromId, info );
+};
 
 var config;
-var apiUrl = 'https://translatewiki.net/w/api.php';
 
 // Get document, or throw exception on error
 try {
-    config = yaml.safeLoad(
-        fs.readFileSync( __dirname + '/mediawiki-telegram-bot.config.yaml', 'utf8' )
-    );
+    config = yaml.safeLoad( fs.readFileSync(
+        __dirname + '/mediawiki-telegram-bot.config.yaml', 'utf8'
+    ) );
 } catch ( e ) {
     console.log( e );
 }
 
-// Setup polling way
-var bot = new TelegramBot( config.token, { polling: true } );
+var tgBot = new TelegramBot( config.token, { polling: true } );
 
 // Matches /echo [whatever]
-bot.onText( /\/echo (.+)/, function ( msg, match ) {
+tgBot.onText( /\/echo (.+)/, function ( msg, match ) {
     var fromId = msg.from.id,
         resp = match[1];
 
-    bot.sendMessage( fromId, resp );
+    tgBot.sendMessage( fromId, resp );
 } );
 
-bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
+// Matches /untranslated [number]
+tgBot.onText( /\/untranslated (\d+)/, function ( msg, match ) {
     var fromId = msg.from.id,
         translatableMessageNumber = match[1];
 
@@ -49,23 +59,12 @@ bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
         function ( error, response, body ) {
             body = JSON.parse( body );
 
-            console.log( '********************* response:' );
-            console.log( JSON.stringify( response, null, 2 ) );
-            console.log( '********************* body:' );
-            console.log( JSON.stringify( body, null, 2 ) );
-            console.log( 'body.query.metadata:' );
-            console.log( body.query.metadata );
-            console.log( 'messagecollection:' );
-            console.log( body.query.messagecollection );
-
             var messageCollection = body.query.messagecollection;
             var targetTranslatableMessage =
                 messageCollection[translatableMessageNumber];
-            console.log( 'targetTranslatableMessage.definition:' );
-            console.log( targetTranslatableMessage.definition );
 
             if ( !error && response.statusCode === 200 ) {
-                bot.sendMessage( fromId, targetTranslatableMessage.definition );
+                tgBot.sendMessage( fromId, targetTranslatableMessage.definition );
             }
 
             mode = 'translation';
@@ -74,7 +73,8 @@ bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
     );
 } );
 
-bot.onText( /([^\/].*)/, function ( msg, match ) {
+// Matches anything without a slash in the beginning
+tgBot.onText( /([^\/].*)/, function ( msg, match ) {
     var fromId = msg.from.id,
         chatMessage = match[1];
 
@@ -84,8 +84,7 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
         return;
     }
 
-    bot.sendMessage( fromId, 'Got translation "' + chatMessage +
-        '", getting token' );
+    debug( fromId, 'Got translation "' + chatMessage + '", getting token' );
 
     request.post( {
         url: apiUrl,
@@ -97,23 +96,23 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
             type: 'login'
         } },
         function ( error, response, body ) {
-            bot.sendMessage( fromId, 'Token request over' );
+            debug( fromId, 'Token request over' );
 
             if ( error || response.statusCode !== 200 ) {
-                bot.sendMessage( fromId, 'Error getting token' );
-                bot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
-                bot.sendMessage( fromId, 'error: ' + error );
+                tgBot.sendMessage( fromId, 'Error getting token' );
+                tgBot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
+                tgBot.sendMessage( fromId, 'error: ' + error );
 
                 return;
             }
 
-            bot.sendMessage( fromId, 'Got MediaWiki login token: ' + body );
+            debug( fromId, 'Got MediaWiki login token: ' + body );
 
             body = JSON.parse( body );
 
             var mwLoginToken = body.query.tokens.logintoken;
 
-            bot.sendMessage( fromId, 'Trying to authenticate' );
+            debug( fromId, 'Trying to authenticate' );
             request.post( {
                 url: apiUrl,
                 form: {
@@ -124,23 +123,20 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
                     lgtoken: mwLoginToken
                 } },
                 function ( error, response, body ) {
-                    bot.sendMessage( fromId, 'Log in request over' );
+                    debug( fromId, 'Log in request over' );
 
                     if ( error || response.statusCode !== 200 ) {
-                        bot.sendMessage( fromId, 'Error logging in' );
-                        bot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
-                        bot.sendMessage( fromId, 'error: ' + error );
+                        tgBot.sendMessage( fromId, 'Error logging in' );
+                        tgBot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
+                        tgBot.sendMessage( fromId, 'error: ' + error );
 
                         return;
                     }
 
-                    bot.sendMessage( fromId, 'Login token request response: ' + body );
-
-                    bot.sendMessage( fromId, 'Logged in, how nice' );
-
-                    bot.sendMessage( fromId, 'title: "' + targetTranslatableMessageTitle + '"' );
-
-                    bot.sendMessage( fromId, 'Getting CSRF token' );
+                    debug( fromId, 'Login token request response: ' + body );
+                    debug( fromId, 'Logged in, how nice' );
+                    debug( fromId, 'title: "' + targetTranslatableMessageTitle + '"' );
+                    debug( fromId, 'Getting CSRF token' );
 
                     request.post( {
                         url: apiUrl,
@@ -151,19 +147,19 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
                             type: 'csrf'
                         } },
                         function ( error, response, body ) {
-                            bot.sendMessage( fromId, 'Edit token request over' );
+                            debug( fromId, 'Edit token request over' );
 
                             if ( error || response.statusCode !== 200 ) {
-                                bot.sendMessage( fromId, 'Error getting edit token' );
-                                bot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
-                                bot.sendMessage( fromId, 'error: ' + error );
+                                tgBot.sendMessage( fromId, 'Error getting edit token' );
+                                tgBot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
+                                tgBot.sendMessage( fromId, 'error: ' + error );
 
                                 return;
                             }
 
                             body = JSON.parse( body );
                             var mwEditToken = body.query.tokens.csrftoken;
-                            bot.sendMessage( fromId, 'Got edit token ' + mwEditToken );
+                            debug( fromId, 'Got edit token ' + mwEditToken );
 
                             request.post( {
                                 url: apiUrl,
@@ -176,17 +172,17 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
                                     token: mwEditToken
                                 } },
                                 function ( error, response, body ) {
-                                bot.sendMessage( fromId, 'Edit request over' );
+                                debug( fromId, 'Edit request over' );
 
                                 if ( error || response.statusCode !== 200 ) {
-                                    bot.sendMessage( fromId, 'Error editing' );
-                                    bot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
-                                    bot.sendMessage( fromId, 'error: ' + error );
+                                    tgBot.sendMessage( fromId, 'Error editing' );
+                                    tgBot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
+                                    tgBot.sendMessage( fromId, 'error: ' + error );
 
                                     return;
                                 }
 
-                                bot.sendMessage( fromId, 'Looks like it worked!' );
+                                debug( fromId, 'Looks like it worked!' );
 
                                 mode = 'fetching';
                                 targetTranslatableMessageTitle = null;
