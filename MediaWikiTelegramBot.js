@@ -1,5 +1,7 @@
 var TelegramBot = require( 'node-telegram-bot-api' );
-var request = require( 'request' );
+var request = require( 'request' ).defaults( {
+    jar: true
+} );
 var yaml = require( 'js-yaml' );
 var fs = require( 'fs' );
 
