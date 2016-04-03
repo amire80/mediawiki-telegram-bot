@@ -28,6 +28,7 @@ People without whom this wouldn't happen:
 * Brad Jorsch
 * Siebrand Mazeland
 * Niklas Laxström
+* Merlijn van Deen
 
 ## License
 Copyright (C) 2016 Amir E. Aharoni, amir.aharoni@mail.huji.ac.il
