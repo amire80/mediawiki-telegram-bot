@@ -95,7 +95,7 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
             var mwLoginToken = body.query.tokens.logintoken;
 
             bot.sendMessage( fromId, 'Trying to authenticate' );
-            request(
+            request.post(
                 'https://translatewiki.net/w/api.php?action=login&format=json&' +
                     'lgname=' + config.username + '&' +
                     'lgpassword=' + config.password + '&' +
@@ -143,7 +143,7 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
                                 'summary=Made+with+Telegram+Bot&' +
                                 'token=' + mwEditToken;
 
-                            request( editRequestUrl, function ( error, response, body ) {
+                            request.post( editRequestUrl, function ( error, response, body ) {
                                 bot.sendMessage( fromId, 'Edit request over' );
 
                                 if ( error || response.statusCode !== 200 ) {
