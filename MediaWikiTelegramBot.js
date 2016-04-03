@@ -111,6 +111,8 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
                         return;
                     }
 
+                    bot.sendMessage( fromId, 'Login token request response: ' + body );
+
                     bot.sendMessage( fromId, 'Logged in, how nice' );
 
                     bot.sendMessage( fromId, 'title: "' + targetTranslatableMessageTitle + '"' );
