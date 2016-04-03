@@ -169,6 +169,7 @@ tgBot.onText( /([^\/].*)/, function ( msg, match ) {
                                     title: targetTranslatableMessageTitle,
                                     text: chatMessage,
                                     summary: 'Made with Telegram Bot',
+                                    tags: 'TelegramBot',
                                     token: mwEditToken
                                 } },
                                 function ( error, response, body ) {
