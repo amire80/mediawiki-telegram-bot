@@ -1,7 +1,7 @@
 var TelegramBot = require( 'node-telegram-bot-api' );
-var request = require('request');
-var yaml = require('js-yaml');
-var fs = require('fs');
+var request = require( 'request' );
+var yaml = require( 'js-yaml' );
+var fs = require( 'fs' );
 
 var mode = 'fetching';
 var targetTranslatableMessageTitle = null;
@@ -78,6 +78,8 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
     request(
         'https://translatewiki.net/w/api.php?action=query&format=json&prop=&meta=tokens&type=login',
         function ( error, response, body ) {
+            bot.sendMessage( fromId, 'Token request over' );
+
             if ( error || response.statusCode !== 200 ) {
                 bot.sendMessage( fromId, 'Error getting token' );
                 bot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
@@ -86,13 +88,21 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
                 return;
             }
 
-            bot.sendMessage( fromId, 'Got token. Trying to authenticate' );
+            bot.sendMessage( fromId, 'Got MediaWiki login token: ' + body );
+
+            body = JSON.parse( body );
+
+            var mwLoginToken = body.query.tokens.logintoken;
+
+            bot.sendMessage( fromId, 'Trying to authenticate' );
             request(
                 'https://translatewiki.net/w/api.php?action=login&format=json&' +
                     'lgname=' + config.username + '&' +
                     'lgpassword=' + config.password + '&' +
-                    'lgtoken=' + body.query.tokens.logintoken,
+                    'lgtoken=' + mwLoginToken,
                 function ( error, response, body ) {
+                    bot.sendMessage( fromId, 'Log in request over' );
+
                     if ( error || response.statusCode !== 200 ) {
                         bot.sendMessage( fromId, 'Error logging in' );
                         bot.sendMessage( fromId, 'statusCode: ' + response.statusCode );
