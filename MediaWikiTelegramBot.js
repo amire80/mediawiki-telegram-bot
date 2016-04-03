@@ -6,10 +6,12 @@ var yaml = require( 'js-yaml' );
 var fs = require( 'fs' );
 
 var mode = 'fetching';
-var targetTranslatableMessageTitle = null;
 var apiUrl = 'https://translatewiki.net/w/api.php';
 
 var debugLevel = 0;
+
+var mwMessageCollection = [];
+var currentMwMessageIndex = 0;
 
 var debug = function ( fromId, info ) {
     if ( !debugLevel ) {
@@ -17,6 +19,20 @@ var debug = function ( fromId, info ) {
     }
 
     tgBot.sendMessage( fromId, info );
+};
+
+var getCurrentMwMessage = function () {
+    if ( !mwMessageCollection.length ||
+        currentMwMessageIndex > mwMessageCollection.length
+    ) {
+        currentMwMessageIndex = 0;
+        mwMessageCollection = [];
+        mode = 'fetching';
+
+        return null;
+    }
+
+    return mwMessageCollection[currentMwMessageIndex];
 };
 
 var config;
@@ -40,10 +56,9 @@ tgBot.onText( /\/echo (.+)/, function ( msg, match ) {
     tgBot.sendMessage( fromId, resp );
 } );
 
-// Matches /untranslated [number]
-tgBot.onText( /\/untranslated (\d+)/, function ( msg, match ) {
-    var fromId = msg.from.id,
-        translatableMessageNumber = match[1];
+// Matches /untranslated
+tgBot.onText( /\/untranslated/, function ( msg, match ) {
+    var fromId = msg.from.id;
 
     request.post( {
         url: apiUrl,
@@ -53,22 +68,29 @@ tgBot.onText( /\/untranslated (\d+)/, function ( msg, match ) {
             prop: '',
             list: 'messagecollection',
             mcgroup: 'ext-0-wikimedia',
-            mclanguage: 'he',
+            mclanguage: 'he', // TODO: Make configurable
+            mclimit: 10, // TODO: Make configurable
             mcfilter: '!optional|!ignored|!translated'
         } },
         function ( error, response, body ) {
             body = JSON.parse( body );
 
-            var messageCollection = body.query.messagecollection;
-            var targetTranslatableMessage =
-                messageCollection[translatableMessageNumber];
+            mwMessageCollection = body.query.messagecollection;
+            currentMwMessageIndex = 0;
+            tgBot.sendMessage( fromId, 'Fetched ' +
+                mwMessageCollection.length +
+                ' untranslated messages'
+            );
+
+            if ( mwMessageCollection.length ) {
+                tgBot.sendMessage( 'Try to translate some!' );
+            }
 
             if ( !error && response.statusCode === 200 ) {
-                tgBot.sendMessage( fromId, targetTranslatableMessage.definition );
+                tgBot.sendMessage( fromId, getCurrentMwMessage().definition );
             }
 
             mode = 'translation';
-            targetTranslatableMessageTitle = targetTranslatableMessage.title;
         }
     );
 } );
@@ -78,8 +100,10 @@ tgBot.onText( /([^\/].*)/, function ( msg, match ) {
     var fromId = msg.from.id,
         chatMessage = match[1];
 
+    var targetTranslatableMessage = getCurrentMwMessage();
+
     if ( mode !== 'translation' ||
-        targetTranslatableMessageTitle === null
+        targetTranslatableMessage === null
     ) {
         return;
     }
@@ -135,7 +159,6 @@ tgBot.onText( /([^\/].*)/, function ( msg, match ) {
 
                     debug( fromId, 'Login token request response: ' + body );
                     debug( fromId, 'Logged in, how nice' );
-                    debug( fromId, 'title: "' + targetTranslatableMessageTitle + '"' );
                     debug( fromId, 'Getting CSRF token' );
 
                     request.post( {
@@ -166,7 +189,7 @@ tgBot.onText( /([^\/].*)/, function ( msg, match ) {
                                 form: {
                                     action: 'edit',
                                     format: 'json',
-                                    title: targetTranslatableMessageTitle,
+                                    title: getCurrentMwMessage().title,
                                     text: chatMessage,
                                     summary: 'Made with Telegram Bot',
                                     tags: 'TelegramBot',
@@ -183,10 +206,17 @@ tgBot.onText( /([^\/].*)/, function ( msg, match ) {
                                     return;
                                 }
 
-                                debug( fromId, 'Looks like it worked!' );
+                                tgBot.sendMessage( fromId, 'Translation published' );
 
-                                mode = 'fetching';
-                                targetTranslatableMessageTitle = null;
+                                currentMwMessageIndex++;
+                                var nextMwMessage = getCurrentMwMessage();
+
+                                if ( nextMwMessage ) {
+                                    tgBot.sendMessage(
+                                        fromId,
+                                        nextMwMessage.definition
+                                    );
+                                }
                             } );
                         }
                     );
