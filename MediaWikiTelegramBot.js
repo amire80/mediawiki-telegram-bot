@@ -9,6 +9,7 @@ var mode = 'fetching';
 var targetTranslatableMessageTitle = null;
 
 var config;
+var apiUrl = 'https://translatewiki.net/w/api.php';
 
 // Get document, or throw exception on error
 try {
@@ -34,8 +35,17 @@ bot.onText( /\/untranslated (.+)/, function ( msg, match ) {
     var fromId = msg.from.id,
         translatableMessageNumber = match[1];
 
-    request(
-        'https://translatewiki.net/w/api.php?action=query&format=json&prop=&list=messagecollection&mcgroup=ext-0-wikimedia&mclanguage=he&mcfilter=!optional|!ignored|!translated',
+    request.post( {
+        url: apiUrl,
+        form: {
+            action: 'query',
+            format: 'json',
+            prop: '',
+            list: 'messagecollection',
+            mcgroup: 'ext-0-wikimedia',
+            mclanguage: 'he',
+            mcfilter: '!optional|!ignored|!translated'
+        } },
         function ( error, response, body ) {
             body = JSON.parse( body );
 
@@ -77,8 +87,15 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
     bot.sendMessage( fromId, 'Got translation "' + chatMessage +
         '", getting token' );
 
-    request(
-        'https://translatewiki.net/w/api.php?action=query&format=json&prop=&meta=tokens&type=login',
+    request.post( {
+        url: apiUrl,
+        form: {
+            action: 'query',
+            format: 'json',
+            prop: '',
+            meta: 'tokens',
+            type: 'login'
+        } },
         function ( error, response, body ) {
             bot.sendMessage( fromId, 'Token request over' );
 
@@ -97,11 +114,15 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
             var mwLoginToken = body.query.tokens.logintoken;
 
             bot.sendMessage( fromId, 'Trying to authenticate' );
-            request.post(
-                'https://translatewiki.net/w/api.php?action=login&format=json&' +
-                    'lgname=' + config.username + '&' +
-                    'lgpassword=' + config.password + '&' +
-                    'lgtoken=' + mwLoginToken,
+            request.post( {
+                url: apiUrl,
+                form: {
+                    action: 'login',
+                    format: 'json',
+                    lgname: config.username,
+                    lgpassword: config.password,
+                    lgtoken: mwLoginToken
+                } },
                 function ( error, response, body ) {
                     bot.sendMessage( fromId, 'Log in request over' );
 
@@ -121,9 +142,14 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
 
                     bot.sendMessage( fromId, 'Getting CSRF token' );
 
-                    var mwEditTokenRequestUrl = 'https://translatewiki.net/w/api.php?action=query&format=json&meta=tokens&type=csrf';
-                    request(
-                        mwEditTokenRequestUrl,
+                    request.post( {
+                        url: apiUrl,
+                        form: {
+                            action: 'query',
+                            format: 'json',
+                            meta: 'tokens',
+                            type: 'csrf'
+                        } },
                         function ( error, response, body ) {
                             bot.sendMessage( fromId, 'Edit token request over' );
 
@@ -139,13 +165,17 @@ bot.onText( /([^\/].*)/, function ( msg, match ) {
                             var mwEditToken = body.query.tokens.csrftoken;
                             bot.sendMessage( fromId, 'Got edit token ' + mwEditToken );
 
-                            var editRequestUrl = 'https://translatewiki.net/w/api.php?action=edit&format=json&' +
-                                'title=' + targetTranslatableMessageTitle + '&' +
-                                'text=' + chatMessage + '&' +
-                                'summary=Made+with+Telegram+Bot&' +
-                                'token=' + mwEditToken;
-
-                            request.post( editRequestUrl, function ( error, response, body ) {
+                            request.post( {
+                                url: apiUrl,
+                                form: {
+                                    action: 'edit',
+                                    format: 'json',
+                                    title: targetTranslatableMessageTitle,
+                                    text: chatMessage,
+                                    summary: 'Made with Telegram Bot',
+                                    token: mwEditToken
+                                } },
+                                function ( error, response, body ) {
                                 bot.sendMessage( fromId, 'Edit request over' );
 
                                 if ( error || response.statusCode !== 200 ) {
