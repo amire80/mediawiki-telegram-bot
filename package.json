@@ -20,6 +20,7 @@
   "dependencies": {
     "js-yaml": "~3.5.5",
     "node-telegram-bot-api": "~0.21.1",
+    "read": "^1.0.7",
     "request": "~2.69.0"
   },
   "author": "Amir E. Aharoni",

@@ -1,7 +1,6 @@
-var request = require( 'request' ).defaults( {
+var request = require( 'request' ).defaults({
     jar: true
 } );
-
 
 const apiUrl = 'https://translatewiki.net/w/api.php';
 
@@ -66,8 +65,6 @@ exports.login = function(username, password, cb) {
                     lgtoken: mwLoginToken
                 } },
                 function ( error, response, body ) {
-                    console.log( 'Log in request over' );
-
                     if ( error || response.statusCode !== 200 ) {
                         console.log( 'Error logging in' );
                         console.log( 'statusCode: ' + response.statusCode );
@@ -76,15 +73,71 @@ exports.login = function(username, password, cb) {
                         return;
                     }
 
-                    console.log( 'Login token request response: ' + body );
-                    console.log( 'Logged in, how nice' );
-                    console.log( 'Getting CSRF token' );
+                    var res = JSON.parse(body);
 
                     if(cb) {
-                        cb();
+                        if(res.login.result == 'Failed') {
+                            cb(res.login.reason);
+                        } else {
+                            cb();
+                        }
                     };
                 }
             );
         }
     );
 };
+
+exports.addTranslation = function(title, translation, summary, cb) {
+    request.post( {
+        url: apiUrl,
+        form: {
+            action: 'query',
+            format: 'json',
+            meta: 'tokens',
+            type: 'csrf'
+        } },
+        function ( error, response, body ) {
+            console.log('Edit token request over' );
+
+            if ( error || response.statusCode !== 200 ) {
+                console.log('Error getting edit token' );
+                console.log('statusCode: ' + response.statusCode );
+                console.log('error: ' + error );
+
+                return;
+            }
+
+            body = JSON.parse( body );
+            var mwEditToken = body.query.tokens.csrftoken;
+            console.log('Got edit token ' + mwEditToken );
+
+            request.post( {
+                url: apiUrl,
+                form: {
+                    action: 'edit',
+                    format: 'json',
+                    title: title,
+                    text: translation,
+                    summary: summary,
+                    tags: 'TelegramBot',
+                    token: mwEditToken
+                } },
+                function ( error, response, body ) {
+                console.log( 'Edit request over' );
+
+                if ( error || response.statusCode !== 200 ) {
+                    console.log('Error editing' );
+                    console.log('statusCode: ' + response.statusCode );
+                    console.log('error: ' + error );
+
+                    return;
+                }
+
+                console.log( 'Translation published' );
+
+                cb();
+            } );
+        }
+    );
+}
