@@ -5,6 +5,8 @@ var request = require( 'request' ).defaults( {
 var yaml = require( 'js-yaml' );
 var fs = require( 'fs' );
 
+var mwApi = require('MediaWikiAPI.js');
+
 var mode = 'fetching';
 var apiUrl = 'https://translatewiki.net/w/api.php';
 
@@ -60,22 +62,8 @@ tgBot.onText( /\/echo (.+)/, function ( msg, match ) {
 tgBot.onText( /\/untranslated/, function ( msg, match ) {
     var fromId = msg.from.id;
 
-    request.post( {
-        url: apiUrl,
-        form: {
-            action: 'query',
-            format: 'json',
-            prop: '',
-            list: 'messagecollection',
-            mcgroup: 'ext-0-wikimedia',
-            mclanguage: 'he', // TODO: Make configurable
-            mclimit: 10, // TODO: Make configurable
-            mcfilter: '!optional|!ignored|!translated'
-        } },
-        function ( error, response, body ) {
-            body = JSON.parse( body );
-
-            mwMessageCollection = body.query.messagecollection;
+    mwApi.getUntranslatedMessages(
+        function (messageCollection) {
             currentMwMessageIndex = 0;
             tgBot.sendMessage( fromId, 'Fetched ' +
                 mwMessageCollection.length +
@@ -93,7 +81,7 @@ tgBot.onText( /\/untranslated/, function ( msg, match ) {
             mode = 'translation';
         }
     );
-} );
+});
 
 // Matches anything without a slash in the beginning
 tgBot.onText( /([^\/].*)/, function ( msg, match ) {
