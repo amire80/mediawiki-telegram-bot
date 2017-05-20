@@ -73,7 +73,7 @@ tgBot.onText( /\/untranslated/, function ( msg, match ) {
             mwMessageCollection[userID]['messages'],
             null,
             2
-        );
+        ) );
 
         tgBot.sendMessage( userID, 'Fetched ' +
             mwMessageCollection[userID]['messages'].length + ' untranslated messages'
