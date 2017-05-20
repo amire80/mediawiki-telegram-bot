@@ -18,9 +18,10 @@
     "translation"
   ],
   "dependencies": {
+    "js-yaml": "~3.5.5",
     "node-telegram-bot-api": "~0.21.1",
-    "request": "~2.69.0",
-    "js-yaml": "~3.5.5"
+    "read": "^1.0.7",
+    "request": "~2.69.0"
   },
   "author": "Amir E. Aharoni",
   "license": "GPL-3.0",
