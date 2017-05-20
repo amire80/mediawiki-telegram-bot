@@ -21,10 +21,10 @@ function exit() {
 untranslated.doc = 'will give you next untranslated message to translate';
 function untranslated() {
     mwApi.getUntranslatedMessages(function (messageCollection) {
-        console.log(`Fetched ${mwMessageCollection.length} untranslated messages`);
+        console.log(`Fetched ${messageCollection.length} untranslated messages`);
         console.log('Try to translate some!');
 
-        translate(mwMessageCollection);
+        translate(messageCollection);
     });
 };
 
