@@ -4,7 +4,7 @@ var request = require( 'request' ).defaults({
 
 const apiUrl = 'https://translatewiki.net/w/api.php';
 
-exports.getUntranslatedMessages = function(cb) {
+exports.getUntranslatedMessages = function( languageCode ,cb ) {
     request.post({
         url: apiUrl,
         form: {
@@ -13,15 +13,16 @@ exports.getUntranslatedMessages = function(cb) {
             prop: '',
             list: 'messagecollection',
             mcgroup: 'ext-0-wikimedia',
-            mclanguage: 'uk', // TODO: Make configurable
+            mclanguage: languageCode,
             mclimit: 10, // TODO: Make configurable
             mcfilter: '!optional|!ignored|!translated'
         }
     }, function ( error, response, body ) {
             body = JSON.parse( body );
 
+            mwMessageCollection = body.query.messagecollection;
 
-            cb(body.query.messagecollection);
+            cb(mwMessageCollection);
         }
     );
 }
@@ -78,6 +79,7 @@ exports.login = function(username, password, cb) {
                         if(res.login.result == 'Failed') {
                             cb(res.login.reason);
                         } else {
+                            console.log('Successfully logged in!');
                             cb();
                         }
                     };
