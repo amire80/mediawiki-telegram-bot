@@ -58,9 +58,10 @@ tgBot.onText( /\/echo (.+)/, function ( msg, match ) {
 
 // Matches /untranslated
 tgBot.onText( /\/untranslated/, function ( msg, match ) {
-    var userID = msg.from.id;
+    var userID = msg.from.id,
+        languageCode = "vi"; // XXX
 
-    mwApi.getUntranslatedMessages(res => {
+    mwApi.getUntranslatedMessages( languageCode, res => {
         mwMessageCollection[userID]['messages'] = res;
 
         mwMessageCollection[userID]['currentMwMessageIndex'] = 0;
@@ -70,7 +71,7 @@ tgBot.onText( /\/untranslated/, function ( msg, match ) {
         );
 
         if ( Object.keys(mwMessageCollection).length ) {
-            tgBot.sendMessage( 'Try to translate some!' );
+            tgBot.sendMessage( userID, 'Try to translate some!' );
             tgBot.sendMessage( userID, getCurrentMwMessage( userID ).definition );
         }
 
