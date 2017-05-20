@@ -12,7 +12,7 @@ var apiUrl = 'https://translatewiki.net/w/api.php';
 
 var debugLevel = 1;
 
-var mwMessageCollection = {};
+var userStatus = {};
 var currentMwMessageIndex = 0;
 
 var debug = function ( fromId, info ) {
@@ -25,14 +25,14 @@ var debug = function ( fromId, info ) {
 
 var getCurrentMwMessage = function ( userID ) {
     // It will short circuit if you don't check that the object exists
-    if ( !Object.keys(mwMessageCollection).length || mwMessageCollection[userID]['currentMwMessageIndex'] > mwMessageCollection[userID]['messages'].length ) {
-        mwMessageCollection[userID]['currentMwMessageIndex'] = 0;
-        mwMessageCollection[userID]['messages'] = [];
+    if ( !Object.keys(userStatus).length || userStatus[userID]['currentMwMessageIndex'] > userStatus[userID]['messages'].length ) {
+        userStatus[userID]['currentMwMessageIndex'] = 0;
+        userStatus[userID]['messages'] = [];
         mode = 'fetching';
         return null;
     }
 
-    return mwMessageCollection[userID]['messages'][mwMessageCollection[userID]['currentMwMessageIndex']];
+    return userStatus[userID]['messages'][userStatus[userID]['currentMwMessageIndex']];
 };
 
 var config;
@@ -57,32 +57,91 @@ tgBot.onText( /\/echo (.+)/, function ( msg, match ) {
 } );
 
 // Matches /untranslated
-tgBot.onText( /\/untranslated/, function ( msg, match ) {
+tgBot.onText( /^\/setlanguage ?(.*)/, function ( msg, match ) {
     var userID = msg.from.id,
-        languageCode = "vi"; // XXX
+        newLanguageCode = match[1];
+
+    debug( userID, "in onText setlanguage" );
+    debug( userID, "newLanguageCode is " + newLanguageCode );
+    debug( userID, "newLanguageCode type is " + typeof( newLanguageCode ) );
+
+    if ( newLanguageCode === '' ) {
+        tgBot.sendMessage( userID, "The current language code is " +
+            getLanguageCode( userID )
+        );
+
+        return;
+    }
+
+    setLanguageCode( userID, newLanguageCode );
+} );
+
+var getLanguageCode = function ( userID ) {
+    var languageCode;
+
+    if ( userStatus[userID] === undefined ) {
+        userStatus[userID] = {};
+
+        return '';
+    }
+
+    languageCode = userStatus[userID]['languageCode'];
+
+    return languageCode;
+};
+
+var setLanguageCode = function ( userID, newLanguageCode ) {
+    debug( userID, "in setLanguageCode(), setting to " +
+        newLanguageCode
+    );
+
+    if ( userStatus[userID] === undefined ) {
+        userStatus[userID] = {};
+    }
+
+    userStatus[userID]['languageCode'] = newLanguageCode;
+    userStatus[userID]['currentMwMessageIndex'] = 0;
+    userStatus[userID]['messages'] = [];
+
+    tgBot.sendMessage( userID, "Set the language code to " + newLanguageCode );
+};
+
+// Matches /untranslated
+tgBot.onText( /\/untranslated/, function ( msg, match ) {
+    var newLanguageCode,
+        userID = msg.from.id,
+        languageCode = getLanguageCode( userID );
+
+    if ( languageCode === undefined ) {
+        languageCode = msg.from.language_code;
+        tgBot.sendMessage( userID, "Automatically setting language code to " +
+            languageCode +
+            ". To change your language, use the /setlanguage command" );
+        setLanguageCode( userID, languageCode )
+    }
 
     debug( userID, 'in onText untranslated' );
 
     mwApi.getUntranslatedMessages( languageCode, messageCollection => {
         debug( userID, 'in getUntranslatedMessages' );
 
-        if ( mwMessageCollection[userID] === undefined ) {
-            mwMessageCollection[userID] = {};
+        if ( userStatus[userID] === undefined ) {
+            userStatus[userID] = {};
         }
-        mwMessageCollection[userID]['messages'] = messageCollection;
-        mwMessageCollection[userID]['currentMwMessageIndex'] = 0;
+        userStatus[userID]['messages'] = messageCollection;
+        userStatus[userID]['currentMwMessageIndex'] = 0;
 
         debug( userID, 'received messageCollection ' + JSON.stringify(
-            mwMessageCollection[userID]['messages'],
+            userStatus[userID]['messages'],
             null,
             2
         ) );
 
         tgBot.sendMessage( userID, 'Fetched ' +
-            mwMessageCollection[userID]['messages'].length + ' untranslated messages'
+            userStatus[userID]['messages'].length + ' untranslated messages'
         );
 
-        if ( mwMessageCollection[userID]['messages'].length ) {
+        if ( userStatus[userID]['messages'].length ) {
             tgBot.sendMessage( userID, 'Try to translate some!' );
             tgBot.sendMessage( userID, getCurrentMwMessage( userID ).definition );
             mode = 'translation';
@@ -115,7 +174,7 @@ tgBot.onText( /^([^\/].*)/, function ( msg, match ) {
             () => {
                 tgBot.sendMessage( userID, 'Translation published' );
 
-                mwMessageCollection[userID]['currentMwMessageIndex']++;
+                userStatus[userID]['currentMwMessageIndex']++;
                 var nextMwMessage = getCurrentMwMessage( userID );
 
                 if ( nextMwMessage ) {
