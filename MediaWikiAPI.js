@@ -125,7 +125,14 @@ exports.addTranslation = function(title, translation, summary, cb) {
                     token: mwEditToken
                 } },
                 function ( error, response, body ) {
-                console.log( 'Edit request over' );
+                    body = JSON.parse( response.body );
+                    console.log( 'Edit request over' );
+
+                if( body.error.info ) {
+                    console.log( body.error.info );
+                    cb( body.error.info );
+                    return;
+                }
 
                 if ( error || response.statusCode !== 200 ) {
                     console.log('Error editing' );
