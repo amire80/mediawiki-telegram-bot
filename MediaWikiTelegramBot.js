@@ -12,7 +12,7 @@ var apiUrl = 'https://translatewiki.net/w/api.php';
 
 var debugLevel = 0;
 
-var mwMessageCollection = [];
+var mwMessageCollection = {};
 var currentMwMessageIndex = 0;
 
 var debug = function ( fromId, info ) {
@@ -23,18 +23,16 @@ var debug = function ( fromId, info ) {
     tgBot.sendMessage( fromId, info );
 };
 
-var getCurrentMwMessage = function () {
-    if ( !mwMessageCollection.length ||
-        currentMwMessageIndex > mwMessageCollection.length
-    ) {
-        currentMwMessageIndex = 0;
-        mwMessageCollection = [];
+var getCurrentMwMessage = function ( userID ) {
+    // It will short circuit if you don't check that the object exists
+    if ( !Object.keys(mwMessageCollection).length || mwMessageCollection[userID]['currentMwMessageIndex'] > mwMessageCollection[userID]['messages'].length ) {
+        mwMessageCollection[userID]['currentMwMessageIndex'] = 0;
+        mwMessageCollection[userID]['messages'] = [];
         mode = 'fetching';
-
         return null;
     }
 
-    return mwMessageCollection[currentMwMessageIndex];
+    return mwMessageCollection[userID]['messages'][mwMessageCollection[userID]['currentMwMessageIndex']];
 };
 
 var config;
@@ -52,28 +50,28 @@ var tgBot = new TelegramBot( config.token, { polling: true } );
 
 // Matches /echo [whatever]
 tgBot.onText( /\/echo (.+)/, function ( msg, match ) {
-    var fromId = msg.from.id,
+    var userID = msg.from.id,
         resp = match[1];
 
-    tgBot.sendMessage( fromId, resp );
+    tgBot.sendMessage( userID, resp );
 } );
 
 // Matches /untranslated
 tgBot.onText( /\/untranslated/, function ( msg, match ) {
-    var fromId = msg.from.id;
+    var userID = msg.from.id;
 
     mwApi.getUntranslatedMessages(res => {
-        mwMessageCollection = res;
+        mwMessageCollection[userID]['messages'] = res;
 
-        currentMwMessageIndex = 0;
-        tgBot.sendMessage( fromId, 'Fetched ' +
-            mwMessageCollection.length +
+        mwMessageCollection[userID]['currentMwMessageIndex'] = 0;
+        tgBot.sendMessage( userID, 'Fetched ' +
+            mwMessageCollection[userID]['messages'][mwMessageCollection[userID]['currentMwMessageIndex']] +
             ' untranslated messages'
         );
 
-        if ( mwMessageCollection.length ) {
+        if ( Object.keys(mwMessageCollection).length ) {
             tgBot.sendMessage( 'Try to translate some!' );
-            tgBot.sendMessage( fromId, getCurrentMwMessage().definition );
+            tgBot.sendMessage( userID, getCurrentMwMessage( userID ).definition );
         }
 
         mode = 'translation';
@@ -81,11 +79,11 @@ tgBot.onText( /\/untranslated/, function ( msg, match ) {
 });
 
 // Matches anything without a slash in the beginning
-tgBot.onText( /([^\/].*)/, function ( msg, match ) {
-    var fromId = msg.from.id,
+tgBot.onText( /^([^\/].*)/, function ( msg, match ) {
+    var userID = msg.from.id,
         chatMessage = match[1];
 
-    var targetTranslatableMessage = getCurrentMwMessage();
+    var targetTranslatableMessage = getCurrentMwMessage( userID );
 
     if ( mode !== 'translation' ||
         targetTranslatableMessage === null
@@ -93,22 +91,22 @@ tgBot.onText( /([^\/].*)/, function ( msg, match ) {
         return;
     }
 
-    debug( fromId, 'Got translation "' + chatMessage + '", getting token' );
+    debug( userID, 'Got translation "' + chatMessage + '", getting token' );
 
     mwApi.login(config.username, config.password, () => {
         mwApi.addTranslation(
-            getCurrentMwMessage().title,
+            getCurrentMwMessage( userID ).title,
             chatMessage,
             'Made with Telegram Bot',
             () => {
-                tgBot.sendMessage( fromId, 'Translation published' );
+                tgBot.sendMessage( userID, 'Translation published' );
 
-                currentMwMessageIndex++;
-                var nextMwMessage = getCurrentMwMessage();
+                mwMessageCollection[userID]['currentMwMessageIndex']++;
+                var nextMwMessage = getCurrentMwMessage( userID );
 
                 if ( nextMwMessage ) {
                     tgBot.sendMessage(
-                        fromId,
+                        userID,
                         nextMwMessage.definition
                     );
                 }
