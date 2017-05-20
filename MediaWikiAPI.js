@@ -20,9 +20,8 @@ exports.getUntranslatedMessages = function(cb) {
     }, function ( error, response, body ) {
             body = JSON.parse( body );
 
-            mwMessageCollection = body.query.messagecollection;
 
-            cb(mwMessageCollection);
+            cb(body.query.messagecollection);
         }
     );
 }
