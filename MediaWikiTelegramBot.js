@@ -10,7 +10,7 @@ var mwApi = require('./MediaWikiAPI.js');
 var mode = 'fetching';
 var apiUrl = 'https://translatewiki.net/w/api.php';
 
-var debugLevel = 0;
+var debugLevel = 1;
 
 var mwMessageCollection = {};
 var currentMwMessageIndex = 0;
@@ -61,21 +61,31 @@ tgBot.onText( /\/untranslated/, function ( msg, match ) {
     var userID = msg.from.id,
         languageCode = "vi"; // XXX
 
-    mwApi.getUntranslatedMessages( languageCode, res => {
-        mwMessageCollection[userID]['messages'] = res;
+    debug( userID, 'in onText untranslated' );
 
+    mwApi.getUntranslatedMessages( languageCode, messageCollection => {
+        debug( userID, 'in getUntranslatedMessages' );
+
+        mwMessageCollection[userID]['messages'] = messageCollection;
         mwMessageCollection[userID]['currentMwMessageIndex'] = 0;
-        tgBot.sendMessage( userID, 'Fetched ' +
-            mwMessageCollection[userID]['messages'][mwMessageCollection[userID]['currentMwMessageIndex']] +
-            ' untranslated messages'
+
+        debug( userID, 'received messageCollection ' + JSON.stringify(
+            mwMessageCollection[userID]['messages'],
+            null,
+            2
         );
 
-        if ( Object.keys(mwMessageCollection).length ) {
+        tgBot.sendMessage( userID, 'Fetched ' +
+            mwMessageCollection[userID]['messages'].length + ' untranslated messages'
+        );
+
+        if ( mwMessageCollection[userID]['messages'].length ) {
             tgBot.sendMessage( userID, 'Try to translate some!' );
             tgBot.sendMessage( userID, getCurrentMwMessage( userID ).definition );
+            mode = 'translation';
+        } else {
+            tgBot.sendMessage( userID, 'Nothing to translate!' );
         }
-
-        mode = 'translation';
     });
 });
 
