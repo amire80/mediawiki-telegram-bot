@@ -66,6 +66,9 @@ tgBot.onText( /\/untranslated/, function ( msg, match ) {
     mwApi.getUntranslatedMessages( languageCode, messageCollection => {
         debug( userID, 'in getUntranslatedMessages' );
 
+        if ( mwMessageCollection[userID] === undefined ) {
+            mwMessageCollection[userID] = {};
+        }
         mwMessageCollection[userID]['messages'] = messageCollection;
         mwMessageCollection[userID]['currentMwMessageIndex'] = 0;
 
