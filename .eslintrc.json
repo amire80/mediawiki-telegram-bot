@@ -1,0 +1,6 @@
+{
+    "extends": "eslint-config-node-services",
+    "rules": {
+        "no-console": 0
+    }
+}
