@@ -23,6 +23,13 @@
     "read": "^1.0.7",
     "request": "~2.69.0"
   },
+  "devDependencies": {
+    "eslint": "3.12.0",
+    "eslint-config-node-services": "~2.2.2",
+    "eslint-config-wikimedia": "~0.4.0",
+    "eslint-plugin-jsdoc": "3.0.0",
+    "eslint-plugin-json": "1.2.0"
+  },
   "author": "Amir E. Aharoni",
   "license": "GPL-3.0",
   "bugs": {
