@@ -121,13 +121,21 @@ tgBot.onText( /\/untranslated/, function ( msg, match ) {
     debug( userID, 'in onText untranslated' );
 
     mwApi.getUntranslatedMessages( languageCode, messageCollection => {
+        var currentMwMessage;
+
         debug( userID, 'in getUntranslatedMessages' );
 
         if ( userStatus[userID] === undefined ) {
             userStatus[userID] = {};
         }
-        userStatus[userID]['messages'] = messageCollection;
-        userStatus[userID]['currentMwMessageIndex'] = 0;
+
+        userStatus[userID].messages = messageCollection.filter( function ( mwMessageData ) {
+            // TODO: The Telegram hard limit is 4096, so we must skip them.
+            // Ideally it should be configurable.
+            return mwMessageData.definition.length < 1000; // TODO: Make configurable
+        } );
+
+        userStatus[userID].currentMwMessageIndex = 0;
 
         debug( userID, 'received messageCollection ' + JSON.stringify(
             userStatus[userID].messages,
