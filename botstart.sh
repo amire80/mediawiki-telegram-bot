@@ -1,4 +1,4 @@
 #!/bin/bash
 
-node ./mediawiki-telegram-bot/MediaWikiTelegramBot.js
+node MediaWikiTelegramBot.js
 
