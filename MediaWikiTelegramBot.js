@@ -121,7 +121,8 @@ tgBot.onText( /\/untranslated/, function ( msg, match ) {
         tgBot.sendMessage( userID, "Automatically setting language code to " +
             languageCode +
             ". To change your language, use the /setlanguage command" );
-        setLanguageCode( userID, languageCode )
+
+        setLanguageCode( userID, languageCode );
     }
 
     debug( userID, 'in onText untranslated' );
@@ -214,6 +215,6 @@ tgBot.onText( /^([^\/].*)/, function ( msg, match ) {
                     }
                 }
             }
-        )
+        );
     });
 } );
