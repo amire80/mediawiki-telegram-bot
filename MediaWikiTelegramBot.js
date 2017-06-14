@@ -8,7 +8,8 @@ const mwApi = require('./MediaWikiAPI.js');
 
 let mode = 'fetching';
 
-let userStatus = {};
+ // TODO probably shouldn't be const
+const userStatus = {};
 
 let config;
 
