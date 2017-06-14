@@ -104,13 +104,19 @@ var setLanguageCode = function ( userID, newLanguageCode ) {
     tgBot.sendMessage( userID, "Set the language code to " + newLanguageCode );
 };
 
+// TODO: Should be much, much more deatiled.
+// For now only checks that it's a string and it's not empty defined.
+var validLanguageCode = function ( languageCode ) {
+    return ( typeof( languageCode ) === 'string' ) && ( languageCode !== '' );
+};
+
 // Matches /untranslated
 tgBot.onText( /\/untranslated/, function ( msg, match ) {
     var newLanguageCode,
         userID = msg.from.id,
         languageCode = getLanguageCode( userID );
 
-    if ( languageCode === undefined ) {
+    if ( !validLanguageCode( languageCode ) ) {
         languageCode = msg.from.language_code;
         tgBot.sendMessage( userID, "Automatically setting language code to " +
             languageCode +
@@ -119,6 +125,15 @@ tgBot.onText( /\/untranslated/, function ( msg, match ) {
     }
 
     debug( userID, 'in onText untranslated' );
+
+    if ( !validLanguageCode( languageCode ) ) {
+        tgBot.sendMessage(
+            userID,
+            'your language code is "' + languageCode + '" and it is not valid.'
+        );
+
+        return;
+    }
 
     mwApi.getUntranslatedMessages( languageCode, messageCollection => {
         var currentMwMessage;
