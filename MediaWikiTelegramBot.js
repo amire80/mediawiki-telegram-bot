@@ -53,6 +53,8 @@ tgBot.onText( /\/echo (.+)/, function ( msg, match ) {
     var userID = msg.from.id,
         resp = match[1];
 
+    console.log( msg );
+
     tgBot.sendMessage( userID, resp );
 } );
 
