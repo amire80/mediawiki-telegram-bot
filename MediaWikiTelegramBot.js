@@ -56,7 +56,7 @@ tgBot.onText( /\/echo (.+)/, function ( msg, match ) {
     tgBot.sendMessage( userID, resp );
 } );
 
-// Matches /untranslated
+// Matches /setlanguage
 tgBot.onText( /^\/setlanguage ?(.*)/, function ( msg, match ) {
     var userID = msg.from.id,
         newLanguageCode = match[1];
