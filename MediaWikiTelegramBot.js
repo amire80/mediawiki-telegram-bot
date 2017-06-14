@@ -5,6 +5,9 @@ const TelegramBot = require("tgfancy");
 const jsonfile = require("jsonfile");
 const i18nCache = {};
 
+const sqlite3 = require("sqlite3").verbose();
+const db = new sqlite3.Database("db/telegram-bot.db");
+
 const mwApi = require("./MediaWikiAPI.js");
 
 const userStatus = {};
@@ -52,17 +55,8 @@ function debug(fromId, info, levelRequired) {
     tgBot.sendMessage(fromId, info);
 }
 
-const REDIRECT_LANGUAGES = {
-    "en-us": "en",
-    "he-il": "he",
-    "iw-il": "he",
-    "iw": "he"
-};
-
-function normalizeLanguageCode(code) {
-    const lower = code.toLowerCase();
-
-    return REDIRECT_LANGUAGES[lower] || lower;
+function userKnown(userID) {
+    return (userStatus[userID] !== undefined);
 }
 
 function initUser(userID) {
@@ -75,21 +69,73 @@ function initUser(userID) {
 }
 
 function getUser(userID) {
-    if (userStatus[userID] === undefined) {
+    if (!userKnown(userID)) {
         initUser(userID);
     }
 
     return userStatus[userID];
 }
 
-// Returns true if the parameter contains
-// a string that can be sent to Telegram.
-function validTgMessage(tgMsg) {
-    return (typeof tgMsg === "string") &&
-        // Telegram messages cannot be empty strings
-        (tgMsg !== "") &&
-        // The Telegram length hard limit is 4096
-        (tgMsg.length < 4096);
+const REDIRECT_LANGUAGES = {
+    "en-us": "en",
+    "he-il": "he",
+    "iw-il": "he",
+    "iw": "he"
+};
+
+function normalizeLanguageCode(code) {
+    if (typeof code !== "string") {
+        code = "";
+    }
+
+    const lower = code.toLowerCase();
+
+    return REDIRECT_LANGUAGES[lower] || lower;
+}
+
+function addUserToDbByTgMsg(tgMsg, cb) {
+    const userID = tgMsg.from.id;
+    const insertStmtStr = `INSERT INTO user (user_telegram_id) VALUES (${userID})`;
+
+    console.log(insertStmtStr);
+    db.run(insertStmtStr, (error) => {
+        if (error !== null) {
+            console.log(`Adding user ${userID} to the database failed: ${error}`);
+
+            return;
+        }
+
+        cb();
+    });
+}
+
+function updateClauseString(options) {
+    const updateClauseParts = [];
+    const columns = Object.keys(options);
+
+    for (let i = 0; i < columns.length; i++) {
+        updateClauseParts.push(`${columns[i]} = "${options[columns[i]]}"`);
+    }
+
+    return updateClauseParts.join(", ");
+}
+
+function updateUserInDb(userID, options, cb) {
+    const updateString =
+        `UPDATE user SET ${updateClauseString(options)} WHERE user_telegram_id = "${userID}"`;
+
+    console.log(`running update: ${updateString}`);
+    db.run(updateString, (error) => {
+        if (error !== null) {
+            console.log(`Updating user ${userID} in the db failed: ${error}.`);
+
+            return;
+        }
+
+        if (typeof cb === "function") {
+            cb();
+        }
+    });
 }
 
 // TODO: Should be much, much more detailed.
@@ -102,7 +148,7 @@ function getLanguageCode(userID) {
     return getUser(userID).languageCode;
 }
 
-function setLanguageCode(userID, newLanguageCode) {
+function setLanguageCode(userID, newLanguageCode, cb) {
     const user = getUser(userID);
 
     debug(
@@ -123,6 +169,56 @@ function setLanguageCode(userID, newLanguageCode) {
     user.languageCode = newLanguageCode;
     user.currentMwMessageIndex = 0;
     user.loadedMwMessages = [];
+
+    updateUserInDb(userID, { user_language: newLanguageCode }, cb);
+}
+
+function loadUserFromDbByTgMsg(tgMsg, cb) {
+    const userID = tgMsg.from.id;
+    const selectString = `SELECT * FROM user WHERE user_telegram_id = '${userID}'`;
+
+    console.log(`loading user ${userID}: ${selectString}`);
+    db.all(selectString, (error, rows) => {
+        if (error !== null) {
+            console.log(`Loading user ${userID} failed: ${error}`);
+
+            return;
+        }
+
+        console.log(`Finished running user loading query. rows is a ${typeof rows}:`);
+        console.log(rows);
+
+        if (rows.length === 0) {
+            console.log(`User ${userID} not found. Adding...`);
+            addUserToDbByTgMsg(tgMsg, cb);
+
+            return;
+        }
+
+        if (rows.length === 1) {
+            initUser(userID);
+
+            setLanguageCode(userID, rows[0].user_language);
+
+            cb();
+
+            return;
+        }
+
+        console.log("There's more than one user with this id in the database");
+
+        tgBot.sendMessage(userID, "There's more than one user with this id in the database");
+    });
+}
+
+// Returns true if the parameter contains
+// a string that can be sent to Telegram.
+function validTgMessage(tgMsg) {
+    return (typeof tgMsg === "string") &&
+        // Telegram messages cannot be empty strings
+        (tgMsg !== "") &&
+        // The Telegram length hard limit is 4096
+        (tgMsg.length < 4096);
 }
 
 // TODO: Replace with something like jquery.i18n
@@ -555,11 +651,7 @@ tgBot.onText(/\/ttm/, (tgMsg, match) => {
     showTranslationMemory(tgMsg.from.id);
 });
 
-// Matches anything without a slash in the beginning
-tgBot.onText(/^([^\/].*)/, (tgMsg, match) => {
-    console.log("In slashless onText");
-    console.log(tgMsg);
-
+function processSlashlessTgMessage(tgMsg) {
     const userID = tgMsg.from.id;
     const user = getUser(userID);
     const targetMwMessage = getCurrentMwMessage(userID);
@@ -602,4 +694,14 @@ tgBot.onText(/^([^\/].*)/, (tgMsg, match) => {
         i18n(languageCode, "tgbot-what-would-you-like-prompt"),
         tgMsgOptions
     );
+}
+
+// Matches anything without a slash in the beginning
+tgBot.onText(/^([^\/].*)/, (tgMsg) => {
+    console.log("In slashless onText");
+    console.log(tgMsg);
+
+    loadUserFromDbByTgMsg(tgMsg, () => {
+        processSlashlessTgMessage(tgMsg);
+    });
 });
