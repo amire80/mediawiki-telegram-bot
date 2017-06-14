@@ -38,7 +38,7 @@ var getCurrentMwMessage = function ( userID ) {
 // Get document, or throw exception on error
 try {
     config = yaml.safeLoad( fs.readFileSync(
-        __dirname + '/config.yaml', 'utf8'
+        'config.yaml', 'utf8'
     ) );
 } catch ( e ) {
     console.log( e );
