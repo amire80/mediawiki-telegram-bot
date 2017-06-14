@@ -147,9 +147,14 @@ tgBot.onText( /\/untranslated/, function ( msg, match ) {
             userStatus[userID].messages.length + ' untranslated messages'
         );
 
-        if ( userStatus[userID]['messages'].length ) {
-            tgBot.sendMessage( userID, 'Try to translate some!' );
-            tgBot.sendMessage( userID, getCurrentMwMessage( userID ).definition );
+        if ( userStatus[userID].messages.length ) {
+            currentMwMessage = getCurrentMwMessage( userID );
+            console.log( currentMwMessage );
+            tgBot.sendMessage( userID, currentMwMessage.definition );
+            if ( currentMwMessage.translation !== null ) {
+                tgBot.sendMessage( userID, "the current translation is:" );
+                tgBot.sendMessage( userID, '"' + currentMwMessage.translation + '"');
+            }
             mode = 'translation';
         } else {
             tgBot.sendMessage( userID, 'Nothing to translate!' );
@@ -188,6 +193,10 @@ tgBot.onText( /^([^\/].*)/, function ( msg, match ) {
                         userID,
                         nextMwMessage.definition
                     );
+                    if ( nextMwMessage.translation !== null ) {
+                        tgBot.sendMessage( userID, "the current translation is:" );
+                        tgBot.sendMessage( userID, '"' + nextMwMessage.translation + '"');
+                    }
                 }
             }
         )
