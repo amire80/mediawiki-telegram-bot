@@ -10,13 +10,13 @@ var mwApi = require('./MediaWikiAPI.js');
 var mode = 'fetching';
 var apiUrl = 'https://translatewiki.net/w/api.php';
 
-var debugLevel = 1;
-
 var userStatus = {};
 var currentMwMessageIndex = 0;
 
+var config;
+
 var debug = function ( fromId, info ) {
-    if ( !debugLevel ) {
+    if ( !config.debugLevel ) {
         return;
     }
 
@@ -34,8 +34,6 @@ var getCurrentMwMessage = function ( userID ) {
 
     return userStatus[userID].messages[userStatus[userID].currentMwMessageIndex];
 };
-
-var config;
 
 // Get document, or throw exception on error
 try {
@@ -63,9 +61,7 @@ tgBot.onText( /^\/setlanguage ?(.*)/, function ( msg, match ) {
     var userID = msg.from.id,
         newLanguageCode = match[1];
 
-    debug( userID, "in onText setlanguage" );
     debug( userID, "newLanguageCode is " + newLanguageCode );
-    debug( userID, "newLanguageCode type is " + typeof( newLanguageCode ) );
 
     if ( newLanguageCode === '' ) {
         tgBot.sendMessage( userID, "The current language code is " +
@@ -139,7 +135,7 @@ tgBot.onText( /\/untranslated/, function ( msg, match ) {
             2
         ) );
 
-        tgBot.sendMessage( userID, 'Fetched ' +
+        debug( userID, 'Fetched ' +
             userStatus[userID].messages.length + ' untranslated messages'
         );
 
@@ -174,7 +170,7 @@ tgBot.onText( /^([^\/].*)/, function ( msg, match ) {
             chatMessage,
             'Made with Telegram Bot',
             () => {
-                tgBot.sendMessage( userID, 'Translation published' );
+                debug( userID, 'Translation published' );
 
                 userStatus[userID].currentMwMessageIndex++;
                 var nextMwMessage = getCurrentMwMessage( userID );
