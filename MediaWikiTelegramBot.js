@@ -24,8 +24,8 @@ try {
 
 const tgBot = new TelegramBot(config.token, { polling: true });
 
-function debug(fromId, info) {
-    if (!config.debugLevel) {
+function debug(fromId, info, levelRequired) {
+    if (config.debugLevel < levelRequired) {
         return;
     }
 
@@ -67,8 +67,10 @@ function getLanguageCode(userID) {
 }
 
 function setLanguageCode(userID, newLanguageCode) {
-    debug(userID, `in setLanguageCode(), setting to ${
-        newLanguageCode}`
+    debug(
+        userID,
+        `in setLanguageCode(), setting to ${newLanguageCode}`,
+        1
     );
 
     if (userStatus[userID] === undefined) {
@@ -87,7 +89,11 @@ tgBot.onText(/^\/setlanguage ?(.*)/, (msg, match) => {
     const newLanguageCode = match[1];
     const userID = msg.from.id;
 
-    debug(userID, `newLanguageCode is ${newLanguageCode}`);
+    debug(
+        userID,
+        `newLanguageCode is ${newLanguageCode}`,
+        1
+    );
 
     if (newLanguageCode === '') {
         tgBot.sendMessage(userID, `The current language code is ${
@@ -120,7 +126,7 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
         setLanguageCode(userID, languageCode);
     }
 
-    debug(userID, 'in onText untranslated');
+    debug(userID, 'in onText untranslated', 1);
 
     if (!validLanguageCode(languageCode)) {
         tgBot.sendMessage(
@@ -134,7 +140,7 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
     mwApi.getUntranslatedMessages(languageCode, (messageCollection) => {
         let currentMwMessage;
 
-        debug(userID, 'in getUntranslatedMessages');
+        debug(userID, 'in getUntranslatedMessages', 1);
 
         if (userStatus[userID] === undefined) {
             userStatus[userID] = {};
@@ -148,14 +154,16 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
 
         userStatus[userID].currentMwMessageIndex = 0;
 
-        debug(userID, `received messageCollection ${JSON.stringify(
-            userStatus[userID].messages,
-            null,
-            2
-        )}`);
+        debug(
+            userID,
+            `got messageCollection: ${JSON.stringify(userStatus[userID].messages, null, 2)}`,
+            1
+        );
 
-        debug(userID, `Fetched ${
-            userStatus[userID].messages.length} untranslated messages`
+        debug(
+            userID,
+            `Fetched ${userStatus[userID].messages.length} untranslated messages`,
+            1
         );
 
         if (userStatus[userID].messages.length) {
@@ -185,7 +193,7 @@ tgBot.onText(/^([^\/].*)/, (msg, match) => {
         return;
     }
 
-    debug(userID, `Got translation "${chatMessage}", getting token`);
+    debug(userID, `Got translation "${chatMessage}", getting token`, 1);
 
     mwApi.login(config.username, config.password, () => {
         mwApi.addTranslation(
@@ -193,7 +201,7 @@ tgBot.onText(/^([^\/].*)/, (msg, match) => {
             chatMessage,
             'Made with Telegram Bot',
             () => {
-                debug(userID, 'Translation published');
+                debug(userID, 'Translation published', 1);
 
                 userStatus[userID].currentMwMessageIndex++;
                 const nextMwMessage = getCurrentMwMessage(userID);
