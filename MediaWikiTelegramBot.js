@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 const TelegramBot = require('node-telegram-bot-api');
 const yaml = require('js-yaml');
@@ -170,7 +170,7 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
             console.log(currentMwMessage);
             tgBot.sendMessage(userID, currentMwMessage.definition);
             if (currentMwMessage.translation !== null) {
-                tgBot.sendMessage(userID, "the current translation is:");
+                tgBot.sendMessage(userID, 'the current translation is:');
                 tgBot.sendMessage(userID, `"${currentMwMessage.translation}"`);
             }
             mode = 'translation';
@@ -211,7 +211,7 @@ tgBot.onText(/^([^\/].*)/, (msg, match) => {
                         nextMwMessage.definition
                     );
                     if (nextMwMessage.translation !== null) {
-                        tgBot.sendMessage(userID, "the current translation is:");
+                        tgBot.sendMessage(userID, 'the current translation is:');
                         tgBot.sendMessage(userID, `"${nextMwMessage.translation}"`);
                     }
                 }
