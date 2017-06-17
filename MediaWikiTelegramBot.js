@@ -164,7 +164,7 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
         debug(
             userID,
             `got messageCollection: ${JSON.stringify(userStatus[userID].messages, null, 2)}`,
-            1
+            2
         );
 
         debug(
