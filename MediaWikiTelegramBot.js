@@ -188,6 +188,32 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
     });
 });
 
+// Matches /qqq
+tgBot.onText(/\/qqq/, (msg, match) => {
+    const userID = msg.from.id;
+    const targetTranslatableMessage = getCurrentMwMessage(userID);
+
+    if (mode !== 'translation' ||
+        targetTranslatableMessage === null
+    ) {
+        return;
+    }
+
+    const title = targetTranslatableMessage.title;
+    debug(userID, `Getting qqq for "${title}"`, 1);
+
+    mwApi.getDocumentation(title, (documentation) => {
+        debug(userID, 'in getDocumentation\'s callback', 1);
+
+        console.log(documentation);
+
+        tgBot.sendMessage(
+            userID,
+            documentation
+        );
+    });
+});
+
 // Matches anything without a slash in the beginning
 tgBot.onText(/^([^\/].*)/, (msg, match) => {
     const chatMessage = match[1];

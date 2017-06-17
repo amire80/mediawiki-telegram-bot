@@ -142,3 +142,21 @@ exports.addTranslation = function(title, translation, summary, cb) {
         }
     );
 }
+
+exports.getDocumentation = function(title, cb) {
+    request.post({
+        url: apiUrl,
+        form: {
+            action: 'translationaids',
+            format: 'json',
+            prop: 'documentation',
+            title: title
+        }
+    }, function ( error, response, body ) {
+            const translationaids = JSON.parse( body );
+
+            // TODO: Handle the case that it doesn't exist, invalid, etc.
+            cb(translationaids.helpers.documentation.value);
+        }
+    );
+};
