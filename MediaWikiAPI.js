@@ -1,4 +1,6 @@
-var request = require( 'request' ).defaults({
+'use strict';
+
+const request = require( 'request' ).defaults({
     jar: true
 } );
 
@@ -20,12 +22,12 @@ exports.getUntranslatedMessages = function( languageCode ,cb ) {
     }, function ( error, response, body ) {
             body = JSON.parse( body );
 
-            mwMessageCollection = body.query.messagecollection;
+            const mwMessageCollection = body.query.messagecollection;
 
             cb(mwMessageCollection);
         }
     );
-}
+};
 
 exports.login = function(username, password, cb) {
     request.post( {
@@ -52,7 +54,7 @@ exports.login = function(username, password, cb) {
 
             body = JSON.parse( body );
 
-            var mwLoginToken = body.query.tokens.logintoken;
+            const mwLoginToken = body.query.tokens.logintoken;
 
             console.log( 'Trying to authenticate' );
             request.post( {
@@ -73,16 +75,16 @@ exports.login = function(username, password, cb) {
                         return;
                     }
 
-                    var res = JSON.parse(body);
+                    const res = JSON.parse(body);
 
                     if(cb) {
-                        if(res.login.result == 'Failed') {
+                        if(res.login.result === 'Failed') {
                             cb(res.login.reason);
                         } else {
                             console.log('Successfully logged in!');
                             cb();
                         }
-                    };
+                    }
                 }
             );
         }
@@ -110,7 +112,8 @@ exports.addTranslation = function(title, translation, summary, cb) {
             }
 
             body = JSON.parse( body );
-            var mwEditToken = body.query.tokens.csrftoken;
+
+            const mwEditToken = body.query.tokens.csrftoken;
             console.log('Got edit token ' + mwEditToken );
 
             request.post( {
@@ -141,7 +144,7 @@ exports.addTranslation = function(title, translation, summary, cb) {
             } );
         }
     );
-}
+};
 
 exports.getDocumentation = function(title, cb) {
     request.post({
