@@ -55,6 +55,16 @@ tgBot.onText(/\/echo (.+)/, (msg, match) => {
     tgBot.sendMessage(userID, resp);
 });
 
+// Returns true if the parameter contains
+// a string that can be sent to Telegram.
+function validTgMessage(tgMessage) {
+    return (typeof tgMessage === 'string') &&
+        // Telegram messages cannot be empty strings
+        (tgMessage !== '') &&
+        // The Telegram length hard limit is 4096
+        (tgMessage.length < 4096);
+}
+
 function getLanguageCode(userID) {
     if (userStatus[userID] === undefined) {
         userStatus[userID] = {};
@@ -146,9 +156,7 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
         }
 
         userStatus[userID].messages = messageCollection.filter((mwMessageData) => {
-            // TODO: The Telegram hard limit is 4096, so we must skip them.
-            // Ideally it should be configurable.
-            return mwMessageData.definition.length < 1000; // TODO: Make configurable
+            return validTgMessage(mwMessageData.definition);
         });
 
         userStatus[userID].currentMwMessageIndex = 0;
