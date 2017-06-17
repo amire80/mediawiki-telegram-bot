@@ -1,12 +1,12 @@
 'use strict';
 
-const request = require( 'request' ).defaults({
+const request = require('request').defaults({
     jar: true
-} );
+});
 
 const apiUrl = 'https://translatewiki.net/w/api.php';
 
-exports.getUntranslatedMessages = function( languageCode ,cb ) {
+exports.getUntranslatedMessages = function(languageCode ,cb) {
     request.post({
         url: apiUrl,
         form: {
@@ -19,18 +19,18 @@ exports.getUntranslatedMessages = function( languageCode ,cb ) {
             mclimit: 10, // TODO: Make configurable
             mcfilter: '!optional|!ignored|!translated'
         }
-    }, function ( error, response, body ) {
-            body = JSON.parse( body );
+    }, (error, response, body) => {
+        body = JSON.parse(body);
 
-            const mwMessageCollection = body.query.messagecollection;
+        const mwMessageCollection = body.query.messagecollection;
 
-            cb(mwMessageCollection);
-        }
+        cb(mwMessageCollection);
+    }
     );
 };
 
 exports.login = function(username, password, cb) {
-    request.post( {
+    request.post({
         url: apiUrl,
         form: {
             action: 'query',
@@ -39,25 +39,25 @@ exports.login = function(username, password, cb) {
             meta: 'tokens',
             type: 'login'
         } },
-        function ( error, response, body ) {
-            console.log( 'Token request over' );
+        (error, response, body) => {
+            console.log('Token request over');
 
-            if ( error || response.statusCode !== 200 ) {
-                console.log('Error getting token' );
-                console.log('statusCode: ' + response.statusCode );
-                console.log('error: ' + error );
+            if (error || response.statusCode !== 200) {
+                console.log('Error getting token');
+                console.log(`statusCode: ${response.statusCode}`);
+                console.log(`error: ${error}`);
 
                 return;
             }
 
-            console.log( 'Got MediaWiki login token: ' + body );
+            console.log(`Got MediaWiki login token: ${body}`);
 
-            body = JSON.parse( body );
+            body = JSON.parse(body);
 
             const mwLoginToken = body.query.tokens.logintoken;
 
-            console.log( 'Trying to authenticate' );
-            request.post( {
+            console.log('Trying to authenticate');
+            request.post({
                 url: apiUrl,
                 form: {
                     action: 'login',
@@ -66,19 +66,19 @@ exports.login = function(username, password, cb) {
                     lgpassword: password,
                     lgtoken: mwLoginToken
                 } },
-                function ( error, response, body ) {
-                    if ( error || response.statusCode !== 200 ) {
-                        console.log( 'Error logging in' );
-                        console.log( 'statusCode: ' + response.statusCode );
-                        console.log( 'error: ' + error );
+                (error, response, body) => {
+                    if (error || response.statusCode !== 200) {
+                        console.log('Error logging in');
+                        console.log(`statusCode: ${response.statusCode}`);
+                        console.log(`error: ${error}`);
 
                         return;
                     }
 
                     const res = JSON.parse(body);
 
-                    if(cb) {
-                        if(res.login.result === 'Failed') {
+                    if (cb) {
+                        if (res.login.result === 'Failed') {
                             cb(res.login.reason);
                         } else {
                             console.log('Successfully logged in!');
@@ -92,7 +92,7 @@ exports.login = function(username, password, cb) {
 };
 
 exports.addTranslation = function(title, translation, summary, cb) {
-    request.post( {
+    request.post({
         url: apiUrl,
         form: {
             action: 'query',
@@ -100,48 +100,48 @@ exports.addTranslation = function(title, translation, summary, cb) {
             meta: 'tokens',
             type: 'csrf'
         } },
-        function ( error, response, body ) {
-            console.log('Edit token request over' );
+        (error, response, body) => {
+            console.log('Edit token request over');
 
-            if ( error || response.statusCode !== 200 ) {
-                console.log('Error getting edit token' );
-                console.log('statusCode: ' + response.statusCode );
-                console.log('error: ' + error );
+            if (error || response.statusCode !== 200) {
+                console.log('Error getting edit token');
+                console.log(`statusCode: ${response.statusCode}`);
+                console.log(`error: ${error}`);
 
                 return;
             }
 
-            body = JSON.parse( body );
+            body = JSON.parse(body);
 
             const mwEditToken = body.query.tokens.csrftoken;
-            console.log('Got edit token ' + mwEditToken );
+            console.log(`Got edit token ${mwEditToken}`);
 
-            request.post( {
+            request.post({
                 url: apiUrl,
                 form: {
                     action: 'edit',
                     format: 'json',
-                    title: title,
+                    title,
                     text: translation,
-                    summary: summary,
+                    summary,
                     tags: 'TelegramBot',
                     token: mwEditToken
                 } },
-                function ( error, response, body ) {
-                console.log( 'Edit request over' );
+                (error, response, body) => {
+                    console.log('Edit request over');
 
-                if ( error || response.statusCode !== 200 ) {
-                    console.log('Error editing' );
-                    console.log('statusCode: ' + response.statusCode );
-                    console.log('error: ' + error );
+                    if (error || response.statusCode !== 200) {
+                        console.log('Error editing');
+                        console.log(`statusCode: ${response.statusCode}`);
+                        console.log(`error: ${error}`);
 
-                    return;
-                }
+                        return;
+                    }
 
-                console.log( 'Translation published' );
+                    console.log('Translation published');
 
-                cb();
-            } );
+                    cb();
+                });
         }
     );
 };
@@ -153,13 +153,13 @@ exports.getDocumentation = function(title, cb) {
             action: 'translationaids',
             format: 'json',
             prop: 'documentation',
-            title: title
+            title
         }
-    }, function ( error, response, body ) {
-            const translationaids = JSON.parse( body );
+    }, (error, response, body) => {
+        const translationaids = JSON.parse(body);
 
             // TODO: Handle the case that it doesn't exist, invalid, etc.
-            cb(translationaids.helpers.documentation.value);
-        }
+        cb(translationaids.helpers.documentation.value);
+    }
     );
 };
