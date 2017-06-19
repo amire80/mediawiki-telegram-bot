@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
-const TelegramBot = require('tgfancy');
-const yaml = require('js-yaml');
-const fs = require('fs');
+const TelegramBot = require("tgfancy");
+const yaml = require("js-yaml");
+const fs = require("fs");
 
-const mwApi = require('./MediaWikiAPI.js');
+const mwApi = require("./MediaWikiAPI.js");
 
-let mode = 'fetching';
+let mode = "fetching";
 
 const userStatus = {};
 
@@ -15,7 +15,7 @@ let config;
 // Get document, or throw exception on error
 try {
     config = yaml.safeLoad(fs.readFileSync(
-        'config.yaml', 'utf8'
+        "config.yaml", "utf8"
     ));
 } catch (e) {
     console.log(e);
@@ -38,7 +38,7 @@ function getCurrentMwMessage(userID) {
     ) {
         userStatus[userID].currentMwMessageIndex = 0;
         userStatus[userID].messages = [];
-        mode = 'fetching';
+        mode = "fetching";
         return null;
     }
 
@@ -58,9 +58,9 @@ tgBot.onText(/\/echo (.+)/, (msg, match) => {
 // Returns true if the parameter contains
 // a string that can be sent to Telegram.
 function validTgMessage(tgMessage) {
-    return (typeof tgMessage === 'string') &&
+    return (typeof tgMessage === "string") &&
         // Telegram messages cannot be empty strings
-        (tgMessage !== '') &&
+        (tgMessage !== "") &&
         // The Telegram length hard limit is 4096
         (tgMessage.length < 4096);
 }
@@ -69,7 +69,7 @@ function getLanguageCode(userID) {
     if (userStatus[userID] === undefined) {
         userStatus[userID] = {};
 
-        return '';
+        return "";
     }
 
     return userStatus[userID].languageCode;
@@ -104,7 +104,7 @@ tgBot.onText(/^\/setlanguage ?(.*)/, (msg, match) => {
         1
     );
 
-    if (newLanguageCode === '') {
+    if (newLanguageCode === "") {
         tgBot.sendMessage(userID, `The current language code is ${
             getLanguageCode(userID)}`
         );
@@ -118,7 +118,7 @@ tgBot.onText(/^\/setlanguage ?(.*)/, (msg, match) => {
 // TODO: Should be much, much more deatiled.
 // For now only checks that it's a string and it's not empty defined.
 function validLanguageCode(languageCode) {
-    return (typeof languageCode === 'string') && (languageCode !== '');
+    return (typeof languageCode === "string") && (languageCode !== "");
 }
 
 // Matches /untranslated
@@ -135,7 +135,7 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
         setLanguageCode(userID, languageCode);
     }
 
-    debug(userID, 'in onText untranslated', 1);
+    debug(userID, "in onText untranslated", 1);
 
     if (!validLanguageCode(languageCode)) {
         tgBot.sendMessage(
@@ -149,7 +149,7 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
     mwApi.getUntranslatedMessages(languageCode, (messageCollection) => {
         let currentMwMessage;
 
-        debug(userID, 'in getUntranslatedMessages', 1);
+        debug(userID, "in getUntranslatedMessages", 1);
 
         if (userStatus[userID] === undefined) {
             userStatus[userID] = {};
@@ -178,12 +178,12 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
             console.log(currentMwMessage);
             tgBot.sendMessage(userID, currentMwMessage.definition);
             if (currentMwMessage.translation !== null) {
-                tgBot.sendMessage(userID, 'the current translation is:');
-                tgBot.sendMessage(userID, `"${currentMwMessage.translation}"`);
+                tgBot.sendMessage(userID, "the current translation is:");
+                tgBot.sendMessage(userID, currentMwMessage.translation);
             }
-            mode = 'translation';
+            mode = "translation";
         } else {
-            tgBot.sendMessage(userID, 'Nothing to translate!');
+            tgBot.sendMessage(userID, "Nothing to translate!");
         }
     });
 });
@@ -193,7 +193,7 @@ tgBot.onText(/\/qqq/, (msg, match) => {
     const userID = msg.from.id;
     const targetTranslatableMessage = getCurrentMwMessage(userID);
 
-    if (mode !== 'translation' ||
+    if (mode !== "translation" ||
         targetTranslatableMessage === null
     ) {
         return;
@@ -203,7 +203,7 @@ tgBot.onText(/\/qqq/, (msg, match) => {
     debug(userID, `Getting qqq for "${title}"`, 1);
 
     mwApi.getDocumentation(title, (documentation) => {
-        debug(userID, 'in getDocumentation\'s callback', 1);
+        debug(userID, "in getDocumentation's callback", 1);
 
         console.log(documentation);
 
@@ -219,7 +219,7 @@ tgBot.onText(/\/ttm/, (msg, match) => {
     const userID = msg.from.id;
     const targetTranslatableMessage = getCurrentMwMessage(userID);
 
-    if (mode !== 'translation' ||
+    if (mode !== "translation" ||
         targetTranslatableMessage === null
     ) {
         return;
@@ -231,7 +231,7 @@ tgBot.onText(/\/ttm/, (msg, match) => {
     mwApi.getTranslationMemory(title, (translationMemory) => {
         let i;
 
-        debug(userID, 'in getTranslationMemory\'s callback', 1);
+        debug(userID, "in getTranslationMemory's callback", 1);
 
         if (translationMemory.length === 0) {
             tgBot.sendMessage(userID, `No translation memory was found for "${title}"`);
@@ -254,7 +254,7 @@ tgBot.onText(/^([^\/].*)/, (msg, match) => {
     const userID = msg.from.id;
     const targetTranslatableMessage = getCurrentMwMessage(userID);
 
-    if (mode !== 'translation' ||
+    if (mode !== "translation" ||
         targetTranslatableMessage === null
     ) {
         return;
@@ -266,9 +266,9 @@ tgBot.onText(/^([^\/].*)/, (msg, match) => {
         mwApi.addTranslation(
             getCurrentMwMessage(userID).title,
             chatMessage,
-            'Made with Telegram Bot',
+            "Made with Telegram Bot",
             () => {
-                debug(userID, 'Translation published', 1);
+                debug(userID, "Translation published", 1);
 
                 userStatus[userID].currentMwMessageIndex++;
                 const nextMwMessage = getCurrentMwMessage(userID);
@@ -279,7 +279,7 @@ tgBot.onText(/^([^\/].*)/, (msg, match) => {
                         nextMwMessage.definition
                     );
                     if (nextMwMessage.translation !== null) {
-                        tgBot.sendMessage(userID, 'the current translation is:');
+                        tgBot.sendMessage(userID, "the current translation is:");
                         tgBot.sendMessage(userID, `"${nextMwMessage.translation}"`);
                     }
                 }
