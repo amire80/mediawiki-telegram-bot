@@ -214,6 +214,40 @@ tgBot.onText(/\/qqq/, (msg, match) => {
     });
 });
 
+// Matches /ttm
+tgBot.onText(/\/ttm/, (msg, match) => {
+    const userID = msg.from.id;
+    const targetTranslatableMessage = getCurrentMwMessage(userID);
+
+    if (mode !== 'translation' ||
+        targetTranslatableMessage === null
+    ) {
+        return;
+    }
+
+    const title = targetTranslatableMessage.title;
+    debug(userID, `Getting translation memory for "${title}"`, 1);
+
+    mwApi.getTranslationMemory(title, (translationMemory) => {
+        let i;
+
+        debug(userID, 'in getTranslationMemory\'s callback', 1);
+
+        if (translationMemory.length === 0) {
+            tgBot.sendMessage(userID, `No translation memory was found for "${title}"`);
+
+            return;
+        }
+
+        for (i = 0; i < translationMemory.length; i++) {
+            tgBot.sendMessage(
+                userID,
+                translationMemory[i].target
+            );
+        }
+    });
+});
+
 // Matches anything without a slash in the beginning
 tgBot.onText(/^([^\/].*)/, (msg, match) => {
     const chatMessage = match[1];

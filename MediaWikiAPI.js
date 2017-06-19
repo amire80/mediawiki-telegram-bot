@@ -158,8 +158,26 @@ exports.getDocumentation = function(title, cb) {
     }, (error, response, body) => {
         const translationaids = JSON.parse(body);
 
-            // TODO: Handle the case that it doesn't exist, invalid, etc.
+        // TODO: Handle the case that it doesn't exist, invalid, etc.
         cb(translationaids.helpers.documentation.value);
+    }
+    );
+};
+
+exports.getTranslationMemory = function(title, cb) {
+    request.post({
+        url: apiUrl,
+        form: {
+            action: 'translationaids',
+            format: 'json',
+            prop: 'ttmserver',
+            title
+        }
+    }, (error, response, body) => {
+        const translationaids = JSON.parse(body);
+
+        // TODO: Handle the case that it doesn't exist, invalid, etc.
+        cb(translationaids.helpers.ttmserver);
     }
     );
 };
