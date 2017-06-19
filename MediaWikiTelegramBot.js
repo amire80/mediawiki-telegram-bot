@@ -1,6 +1,6 @@
 'use strict';
 
-const TelegramBot = require('node-telegram-bot-api');
+const TelegramBot = require('tgfancy');
 const yaml = require('js-yaml');
 const fs = require('fs');
 
