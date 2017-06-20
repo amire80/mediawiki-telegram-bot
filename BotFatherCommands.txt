@@ -1,0 +1,4 @@
+setlanguage - Set the language. Write the language code after the command.
+untranslated - Get a list of untranslated messages.
+qqq - Get the message documentation for the latest message.
+ttm - Get the translation memory for the latest message.
