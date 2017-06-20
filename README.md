@@ -6,32 +6,52 @@ translatewiki.net and send translations to them using the Telegram
 chat network.
 
 ## Coding conventions
-Use the [MediaWiki JavaScript coding conventions](https://www.mediawiki.org/wiki/Manual:Coding_conventions/JavaScript).
 
-In addition, since Telegram and MediaWiki have a lot of overlapping terminology, always make it explicit in the variable names, comments, etc., that you add, to which side do you refer when you talk about any of these:
-
-* bot
-* token
-* message
-
-Use "tg" and "mw" if you need short prefixes.
+See CONTRIBUTING.md.
 
 ## Credits
 Put together from nearly random code samples on npmjs.org and StackOverflow by
 Amir E. Aharoni at the Wikimedia Hackathon 2016 in Jerusalem.
 
-People without whom this wouldn't happen:
+People without whom this wouldn't happen, in no particular order:
+
+Help with Wikimedia Cloud servers:
 
 * Bryan Davis
-* Marko Obrovac
-* Petr Bena
-* Brad Jorsch
-* Siebrand Mazeland
-* Niklas Laxström
+* Madhumitha Viswanathan
 * Merlijn van Deen
 
+Help with MediaWiki API:
+
+* Brad Jorsch
+* Petr Bena
+
+Help with Node.js:
+
+* Marko Obrovac
+
+Help with translatewiki.net:
+
+* Siebrand Mazeland
+* Niklas Laxström
+
+Patches:
+
+* Justin Du
+* Taras Bunyk
+
+Inspiration, support, ideas:
+
+* Pau Giner
+* HLA
+
+I would also like to thank the developers of these libraries:
+
+* [tgfancy](https://github.com/GochoMugo/tgfancy)
+* [node-telegram-bot-api](https://github.com/yagop/node-telegram-bot-api)
+
 ## License
-Copyright (C) 2016 Amir E. Aharoni, amir.aharoni@mail.huji.ac.il
+Copyright (C) 2016–2017 Amir E. Aharoni, amir.aharoni@mail.huji.ac.il
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
