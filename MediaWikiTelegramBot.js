@@ -6,8 +6,6 @@ const fs = require("fs");
 
 const mwApi = require("./MediaWikiAPI.js");
 
-let mode = "fetching";
-
 const userStatus = {};
 
 let config;
@@ -38,7 +36,7 @@ function getCurrentMwMessage(userID) {
     ) {
         userStatus[userID].currentMwMessageIndex = 0;
         userStatus[userID].messages = [];
-        mode = "fetching";
+        userStatus[userID].mode = "fetching";
         return null;
     }
 
@@ -181,7 +179,7 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
                 tgBot.sendMessage(userID, "the current translation is:");
                 tgBot.sendMessage(userID, currentMwMessage.translation);
             }
-            mode = "translation";
+            userStatus[userID].mode = "translation";
         } else {
             tgBot.sendMessage(userID, "Nothing to translate!");
         }
@@ -193,7 +191,7 @@ tgBot.onText(/\/qqq/, (msg, match) => {
     const userID = msg.from.id;
     const targetTranslatableMessage = getCurrentMwMessage(userID);
 
-    if (mode !== "translation" ||
+    if (userStatus[userID].mode !== "translation" ||
         targetTranslatableMessage === null
     ) {
         return;
@@ -219,7 +217,7 @@ tgBot.onText(/\/ttm/, (msg, match) => {
     const userID = msg.from.id;
     const targetTranslatableMessage = getCurrentMwMessage(userID);
 
-    if (mode !== "translation" ||
+    if (userStatus[userID].mode !== "translation" ||
         targetTranslatableMessage === null
     ) {
         return;
@@ -254,7 +252,7 @@ tgBot.onText(/^([^\/].*)/, (msg, match) => {
     const userID = msg.from.id;
     const targetTranslatableMessage = getCurrentMwMessage(userID);
 
-    if (mode !== "translation" ||
+    if (userStatus[userID].mode !== "translation" ||
         targetTranslatableMessage === null
     ) {
         return;
