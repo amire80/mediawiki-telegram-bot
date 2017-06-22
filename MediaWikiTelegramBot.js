@@ -8,6 +8,9 @@ const mwApi = require("./MediaWikiAPI.js");
 
 const userStatus = {};
 
+const FETCHING_MODE = "fetching";
+const TRANSLATING_MODE = "translating";
+
 let config;
 
 // Get document, or throw exception on error
@@ -46,7 +49,7 @@ function getCurrentMwMessage(userID) {
 function showDocumentation(userID) {
     const targetTranslatableMessage = getCurrentMwMessage(userID);
 
-    if (userStatus[userID].mode !== "translation" ||
+    if (userStatus[userID].mode !== TRANSLATING_MODE ||
         targetTranslatableMessage === null
     ) {
         return;
@@ -66,7 +69,7 @@ function showDocumentation(userID) {
 function showTranslationMemory(userID) {
     const targetTranslatableMessage = getCurrentMwMessage(userID);
 
-    if (userStatus[userID].mode !== "translation" ||
+    if (userStatus[userID].mode !== TRANSLATING_MODE ||
         targetTranslatableMessage === null
     ) {
         return;
@@ -140,14 +143,14 @@ function showNextMwMessage(userID) {
             tgBot.sendMessage(userID, "the current translation is:");
             tgBot.sendMessage(userID, currentMwMessage.translation);
         }
-        userStatus[userID].mode = "translation";
+        userStatus[userID].mode = TRANSLATING_MODE;
     });
 }
 
 function publishTranslation(userID, text) {
     const targetTranslatableMessage = getCurrentMwMessage(userID);
 
-    if (userStatus[userID].mode !== "translation" ||
+    if (userStatus[userID].mode !== TRANSLATING_MODE ||
         targetTranslatableMessage === null
     ) {
         return;
