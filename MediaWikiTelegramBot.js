@@ -95,6 +95,82 @@ function showTranslationMemory(userID) {
     });
 }
 
+function showNextMwMessage(userID) {
+    const currentMwMessage = getCurrentMwMessage(userID);
+    console.log(currentMwMessage);
+
+    mwApi.getTranslationMemory(currentMwMessage.title, (translationMemory) => {
+        let i;
+
+        currentMwMessage.translationMemory = translationMemory;
+
+        debug(userID, "in getTranslationMemory's callback", 1);
+
+        if (currentMwMessage.translationMemory.length === 0) {
+            console.log(
+                userID,
+                `No translation memory was found for "${currentMwMessage.title}"`
+            );
+        }
+
+        const inlineKeyboard = [
+            [{ text: "Get documentation", callback_data: "qqq" }]
+        ];
+
+        for (i = 0; i < currentMwMessage.translationMemory.length; i++) {
+            inlineKeyboard.push([{
+                text: currentMwMessage.translationMemory[i].target,
+                callback_data: `ttm${i}`
+            }]);
+        }
+
+        const tgMsgOptions = {
+            reply_markup: JSON.stringify({
+                inline_keyboard: inlineKeyboard
+            })
+        };
+
+        tgBot.sendMessage(
+            userID,
+            currentMwMessage.definition,
+            tgMsgOptions
+        );
+
+        if (currentMwMessage.translation !== null) {
+            tgBot.sendMessage(userID, "the current translation is:");
+            tgBot.sendMessage(userID, currentMwMessage.translation);
+        }
+        userStatus[userID].mode = "translation";
+    });
+}
+
+function publishTranslation(userID, text) {
+    const targetTranslatableMessage = getCurrentMwMessage(userID);
+
+    if (userStatus[userID].mode !== "translation" ||
+        targetTranslatableMessage === null
+    ) {
+        return;
+    }
+
+    debug(userID, `Got translation "${text}", getting token`, 1);
+
+    mwApi.login(config.username, config.password, () => {
+        mwApi.addTranslation(
+            getCurrentMwMessage(userID).title,
+            text,
+            "Made with Telegram Bot",
+            () => {
+                debug(userID, "Translation published", 1);
+
+                userStatus[userID].currentMwMessageIndex++;
+
+                showNextMwMessage(userID);
+            }
+        );
+    });
+}
+
 // Matches /echo [whatever]
 tgBot.onText(/\/echo (.+)/, (msg, match) => {
     const resp = match[1];
@@ -175,14 +251,25 @@ function validLanguageCode(languageCode) {
 }
 
 tgBot.on("callback_query", (msg) => {
+    const userID = msg.from.id;
+
     console.log("callback_query got msg:");
     console.log(msg);
 
     if (msg.data === "qqq") {
         showDocumentation(msg.from.id);
+
+        return;
     }
-    if (msg.data === "ttm") {
-        showTranslationMemory(msg.from.id);
+
+    const ttm = msg.data.match(/^ttm(\d+)/);
+    if (ttm !== null) {
+        publishTranslation(
+            userID,
+            getCurrentMwMessage(userID).translationMemory[ttm[1]].target
+        );
+
+        return;
     }
 });
 
@@ -212,8 +299,6 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
     }
 
     mwApi.getUntranslatedMessages(languageCode, (messageCollection) => {
-        let currentMwMessage;
-
         debug(userID, "in getUntranslatedMessages", 1);
 
         if (userStatus[userID] === undefined) {
@@ -239,31 +324,7 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
         );
 
         if (userStatus[userID].messages.length) {
-            currentMwMessage = getCurrentMwMessage(userID);
-            console.log(currentMwMessage);
-
-            const inlineKeyboard = [
-                [{ text: "Get documentation", callback_data: "qqq" }],
-                [{ text: "Get translation memory", callback_data: "ttm" }]
-            ];
-
-            const tgMsgOptions = {
-                reply_markup: JSON.stringify({
-                    inline_keyboard: inlineKeyboard
-                })
-            };
-
-            tgBot.sendMessage(
-                userID,
-                currentMwMessage.definition,
-                tgMsgOptions
-            );
-
-            if (currentMwMessage.translation !== null) {
-                tgBot.sendMessage(userID, "the current translation is:");
-                tgBot.sendMessage(userID, currentMwMessage.translation);
-            }
-            userStatus[userID].mode = "translation";
+            showNextMwMessage(userID);
         } else {
             tgBot.sendMessage(userID, "Nothing to translate!");
         }
@@ -282,40 +343,8 @@ tgBot.onText(/\/ttm/, (msg, match) => {
 
 // Matches anything without a slash in the beginning
 tgBot.onText(/^([^\/].*)/, (msg, match) => {
-    const chatMessage = match[1];
     const userID = msg.from.id;
-    const targetTranslatableMessage = getCurrentMwMessage(userID);
+    const chatMessage = match[1];
 
-    if (userStatus[userID].mode !== "translation" ||
-        targetTranslatableMessage === null
-    ) {
-        return;
-    }
-
-    debug(userID, `Got translation "${chatMessage}", getting token`, 1);
-
-    mwApi.login(config.username, config.password, () => {
-        mwApi.addTranslation(
-            getCurrentMwMessage(userID).title,
-            chatMessage,
-            "Made with Telegram Bot",
-            () => {
-                debug(userID, "Translation published", 1);
-
-                userStatus[userID].currentMwMessageIndex++;
-                const nextMwMessage = getCurrentMwMessage(userID);
-
-                if (nextMwMessage) {
-                    tgBot.sendMessage(
-                        userID,
-                        nextMwMessage.definition
-                    );
-                    if (nextMwMessage.translation !== null) {
-                        tgBot.sendMessage(userID, "the current translation is:");
-                        tgBot.sendMessage(userID, `"${nextMwMessage.translation}"`);
-                    }
-                }
-            }
-        );
-    });
+    publishTranslation(userID, chatMessage);
 });
