@@ -179,7 +179,10 @@ function showNextMwMessage(userID) {
         }
 
         const inlineKeyboard = [
-            [{ text: "Get documentation", callback_data: "qqq" }]
+            [{
+                text: msg(getLanguageCode(userID), "tgbot-get-documentation"),
+                callback_data: "qqq"
+            }]
         ];
 
         for (i = 0; i < currentMwMessage.translationMemory.length; i++) {

@@ -4,5 +4,6 @@
 			"Amire80"
 		]
 	},
+	"tgbot-get-documentation": "Appears on a button under a translatable message. Tapping the button sends a chat message with the documentation about the translatable message.",
 	"tgbot-the-current-translation-is": "Shown as a chat message after a fuzzy translatable message and before its current translation."
 }
