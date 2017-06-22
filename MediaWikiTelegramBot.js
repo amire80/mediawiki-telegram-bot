@@ -39,7 +39,7 @@ function getCurrentMwMessage(userID) {
     ) {
         userStatus[userID].currentMwMessageIndex = 0;
         userStatus[userID].messages = [];
-        userStatus[userID].mode = "fetching";
+        userStatus[userID].mode = FETCHING_MODE;
         return null;
     }
 
@@ -100,6 +100,12 @@ function showTranslationMemory(userID) {
 
 function showNextMwMessage(userID) {
     const currentMwMessage = getCurrentMwMessage(userID);
+
+    if (currentMwMessage === undefined) {
+        // TODO: Show the welcome menu instead
+        return;
+    }
+
     console.log(currentMwMessage);
 
     mwApi.getTranslationMemory(currentMwMessage.title, (translationMemory) => {
@@ -348,6 +354,12 @@ tgBot.onText(/\/ttm/, (msg, match) => {
 tgBot.onText(/^([^\/].*)/, (msg, match) => {
     const userID = msg.from.id;
     const chatMessage = match[1];
+
+    if (userStatus[userID].mode !== TRANSLATING_MODE ||
+        targetTranslatableMessage === null
+    ) {
+        return;
+    }
 
     publishTranslation(userID, chatMessage);
 });
