@@ -19,6 +19,7 @@
   ],
   "dependencies": {
     "js-yaml": "~3.5.5",
+    "jsonfile": "~3.0.0",
     "read": "^1.0.7",
     "request": "~2.69.0",
     "tgfancy": "^0.10.0"

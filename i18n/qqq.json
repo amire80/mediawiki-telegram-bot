@@ -1,0 +1,8 @@
+{
+	"@metadata": {
+		"authors": [
+			"Amire80"
+		]
+	},
+	"tgbot-the-current-translation-is": "Shown as a chat message after a fuzzy translatable message and before its current translation."
+}

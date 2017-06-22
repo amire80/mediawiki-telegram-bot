@@ -2,6 +2,10 @@
 
 const TelegramBot = require("tgfancy");
 const yaml = require("js-yaml");
+
+const jsonfile = require("jsonfile");
+const i18nCache = {};
+
 const fs = require("fs");
 
 const mwApi = require("./MediaWikiAPI.js");
@@ -30,6 +34,63 @@ function debug(fromId, info, levelRequired) {
     }
 
     tgBot.sendMessage(fromId, info);
+}
+
+function getLanguageCode(userID) {
+    if (userStatus[userID] === undefined) {
+        userStatus[userID] = {};
+
+        return "";
+    }
+
+    return userStatus[userID].languageCode;
+}
+
+function setLanguageCode(userID, newLanguageCode) {
+    debug(
+        userID,
+        `in setLanguageCode(), setting to ${newLanguageCode}`,
+        1
+    );
+
+    if (userStatus[userID] === undefined) {
+        userStatus[userID] = {};
+    }
+
+    userStatus[userID].languageCode = newLanguageCode;
+    userStatus[userID].currentMwMessageIndex = 0;
+    userStatus[userID].messages = [];
+
+    tgBot.sendMessage(userID, `Set the language code to ${newLanguageCode}`);
+}
+
+// TODO: Replace with something like jquery.i18n
+function msg(language, key) {
+    console.log("msg");
+    console.log(language);
+    console.log(key);
+
+    if (i18nCache[language] === undefined) {
+        console.log("cache undefined");
+        try {
+            i18nCache[language] = jsonfile.readFileSync(`i18n/${language}.json`);
+        } catch (e) {
+            console.log(e);
+            i18nCache[language] = {};
+        }
+    }
+
+    if (typeof i18nCache[language][key] !== "string") {
+        if (language === "en") {
+            // Give up
+            return key;
+        }
+
+        // Fallback
+        return msg("en", key);
+    }
+
+    return i18nCache[language][key];
 }
 
 function getCurrentMwMessage(userID) {
@@ -146,7 +207,10 @@ function showNextMwMessage(userID) {
         );
 
         if (currentMwMessage.translation !== null) {
-            tgBot.sendMessage(userID, "the current translation is:");
+            tgBot.sendMessage(
+                userID,
+                msg(getLanguageCode(userID), "tgbot-the-current-translation-is")
+            );
             tgBot.sendMessage(userID, currentMwMessage.translation);
         }
         userStatus[userID].mode = TRANSLATING_MODE;
@@ -198,34 +262,6 @@ function validTgMessage(tgMessage) {
         (tgMessage !== "") &&
         // The Telegram length hard limit is 4096
         (tgMessage.length < 4096);
-}
-
-function getLanguageCode(userID) {
-    if (userStatus[userID] === undefined) {
-        userStatus[userID] = {};
-
-        return "";
-    }
-
-    return userStatus[userID].languageCode;
-}
-
-function setLanguageCode(userID, newLanguageCode) {
-    debug(
-        userID,
-        `in setLanguageCode(), setting to ${newLanguageCode}`,
-        1
-    );
-
-    if (userStatus[userID] === undefined) {
-        userStatus[userID] = {};
-    }
-
-    userStatus[userID].languageCode = newLanguageCode;
-    userStatus[userID].currentMwMessageIndex = 0;
-    userStatus[userID].messages = [];
-
-    tgBot.sendMessage(userID, `Set the language code to ${newLanguageCode}`);
 }
 
 // Matches /setlanguage
@@ -354,6 +390,7 @@ tgBot.onText(/\/ttm/, (msg, match) => {
 tgBot.onText(/^([^\/].*)/, (msg, match) => {
     const userID = msg.from.id;
     const chatMessage = match[1];
+    const targetTranslatableMessage = getCurrentMwMessage(userID);
 
     if (userStatus[userID].mode !== TRANSLATING_MODE ||
         targetTranslatableMessage === null
