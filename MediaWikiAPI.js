@@ -158,6 +158,9 @@ exports.getDocumentation = function(title, cb) {
     }, (error, response, body) => {
         const translationaids = JSON.parse(body);
 
+        console.log("translationaids, documentation:");
+        console.log(translationaids);
+
         // TODO: Handle the case that it doesn't exist, invalid, etc.
         cb(translationaids.helpers.documentation.value);
     }

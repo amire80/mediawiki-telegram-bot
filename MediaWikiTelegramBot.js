@@ -43,6 +43,58 @@ function getCurrentMwMessage(userID) {
     return userStatus[userID].messages[userStatus[userID].currentMwMessageIndex];
 }
 
+function showDocumentation(userID) {
+    const targetTranslatableMessage = getCurrentMwMessage(userID);
+
+    if (userStatus[userID].mode !== "translation" ||
+        targetTranslatableMessage === null
+    ) {
+        return;
+    }
+
+    const title = targetTranslatableMessage.title;
+    debug(userID, `Getting qqq for "${title}"`, 1);
+
+    mwApi.getDocumentation(title, (documentation) => {
+        tgBot.sendMessage(
+            userID,
+            documentation
+        );
+    });
+}
+
+function showTranslationMemory(userID) {
+    const targetTranslatableMessage = getCurrentMwMessage(userID);
+
+    if (userStatus[userID].mode !== "translation" ||
+        targetTranslatableMessage === null
+    ) {
+        return;
+    }
+
+    const title = targetTranslatableMessage.title;
+    debug(userID, `Getting translation memory for "${title}"`, 1);
+
+    mwApi.getTranslationMemory(title, (translationMemory) => {
+        let i;
+
+        debug(userID, "in getTranslationMemory's callback", 1);
+
+        if (translationMemory.length === 0) {
+            tgBot.sendMessage(userID, `No translation memory was found for "${title}"`);
+
+            return;
+        }
+
+        for (i = 0; i < translationMemory.length; i++) {
+            tgBot.sendMessage(
+                userID,
+                translationMemory[i].target
+            );
+        }
+    });
+}
+
 // Matches /echo [whatever]
 tgBot.onText(/\/echo (.+)/, (msg, match) => {
     const resp = match[1];
@@ -122,6 +174,18 @@ function validLanguageCode(languageCode) {
     return (typeof languageCode === "string") && (languageCode !== "");
 }
 
+tgBot.on("callback_query", (msg) => {
+    console.log("callback_query got msg:");
+    console.log(msg);
+
+    if (msg.data === "qqq") {
+        showDocumentation(msg.from.id);
+    }
+    if (msg.data === "ttm") {
+        showTranslationMemory(msg.from.id);
+    }
+});
+
 // Matches /untranslated
 tgBot.onText(/\/untranslated/, (msg, match) => {
     const userID = msg.from.id;
@@ -177,7 +241,24 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
         if (userStatus[userID].messages.length) {
             currentMwMessage = getCurrentMwMessage(userID);
             console.log(currentMwMessage);
-            tgBot.sendMessage(userID, currentMwMessage.definition);
+
+            const inlineKeyboard = [
+                [{ text: "Get documentation", callback_data: "qqq" }],
+                [{ text: "Get translation memory", callback_data: "ttm" }]
+            ];
+
+            const tgMsgOptions = {
+                reply_markup: JSON.stringify({
+                    inline_keyboard: inlineKeyboard
+                })
+            };
+
+            tgBot.sendMessage(
+                userID,
+                currentMwMessage.definition,
+                tgMsgOptions
+            );
+
             if (currentMwMessage.translation !== null) {
                 tgBot.sendMessage(userID, "the current translation is:");
                 tgBot.sendMessage(userID, currentMwMessage.translation);
@@ -191,62 +272,12 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
 
 // Matches /qqq
 tgBot.onText(/\/qqq/, (msg, match) => {
-    const userID = msg.from.id;
-    const targetTranslatableMessage = getCurrentMwMessage(userID);
-
-    if (userStatus[userID].mode !== "translation" ||
-        targetTranslatableMessage === null
-    ) {
-        return;
-    }
-
-    const title = targetTranslatableMessage.title;
-    debug(userID, `Getting qqq for "${title}"`, 1);
-
-    mwApi.getDocumentation(title, (documentation) => {
-        debug(userID, "in getDocumentation's callback", 1);
-
-        console.log(documentation);
-
-        tgBot.sendMessage(
-            userID,
-            documentation
-        );
-    });
+    showDocumentation(msg.from.id);
 });
 
 // Matches /ttm
 tgBot.onText(/\/ttm/, (msg, match) => {
-    const userID = msg.from.id;
-    const targetTranslatableMessage = getCurrentMwMessage(userID);
-
-    if (userStatus[userID].mode !== "translation" ||
-        targetTranslatableMessage === null
-    ) {
-        return;
-    }
-
-    const title = targetTranslatableMessage.title;
-    debug(userID, `Getting translation memory for "${title}"`, 1);
-
-    mwApi.getTranslationMemory(title, (translationMemory) => {
-        let i;
-
-        debug(userID, "in getTranslationMemory's callback", 1);
-
-        if (translationMemory.length === 0) {
-            tgBot.sendMessage(userID, `No translation memory was found for "${title}"`);
-
-            return;
-        }
-
-        for (i = 0; i < translationMemory.length; i++) {
-            tgBot.sendMessage(
-                userID,
-                translationMemory[i].target
-            );
-        }
-    });
+    showTranslationMemory(msg.from.id);
 });
 
 // Matches anything without a slash in the beginning
