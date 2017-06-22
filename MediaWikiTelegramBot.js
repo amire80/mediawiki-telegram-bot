@@ -66,12 +66,7 @@ function setLanguageCode(userID, newLanguageCode) {
 
 // TODO: Replace with something like jquery.i18n
 function msg(language, key) {
-    console.log("msg");
-    console.log(language);
-    console.log(key);
-
     if (i18nCache[language] === undefined) {
-        console.log("cache undefined");
         try {
             i18nCache[language] = jsonfile.readFileSync(`i18n/${language}.json`);
         } catch (e) {
