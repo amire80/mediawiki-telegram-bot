@@ -96,6 +96,9 @@ tgBot.onText(/^\/setlanguage ?(.*)/, (msg, match) => {
     const newLanguageCode = match[1];
     const userID = msg.from.id;
 
+    console.log(`setlanguage. newLanguageCode is ${newLanguageCode}`);
+    console.log(msg);
+
     debug(
         userID,
         `newLanguageCode is ${newLanguageCode}`,
