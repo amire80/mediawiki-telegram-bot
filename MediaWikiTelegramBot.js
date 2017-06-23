@@ -65,7 +65,7 @@ function setLanguageCode(userID, newLanguageCode) {
 }
 
 // TODO: Replace with something like jquery.i18n
-function msg(language, key) {
+function i18n(language, key) {
     if (i18nCache[language] === undefined) {
         try {
             i18nCache[language] = jsonfile.readFileSync(`i18n/${language}.json`);
@@ -82,7 +82,7 @@ function msg(language, key) {
         }
 
         // Fallback
-        return msg("en", key);
+        return i18n("en", key);
     }
 
     return i18nCache[language][key];
@@ -180,7 +180,7 @@ function showNextMwMessage(userID) {
 
         const inlineKeyboard = [
             [{
-                text: msg(getLanguageCode(userID), "tgbot-get-documentation"),
+                text: i18n(getLanguageCode(userID), "tgbot-get-documentation"),
                 callback_data: "qqq"
             }]
         ];
@@ -207,7 +207,7 @@ function showNextMwMessage(userID) {
         if (currentMwMessage.translation !== null) {
             tgBot.sendMessage(
                 userID,
-                msg(getLanguageCode(userID), "tgbot-the-current-translation-is")
+                i18n(getLanguageCode(userID), "tgbot-the-current-translation-is")
             );
             tgBot.sendMessage(userID, currentMwMessage.translation);
         }
