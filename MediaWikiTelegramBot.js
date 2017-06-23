@@ -59,7 +59,7 @@ function setLanguageCode(userID, newLanguageCode) {
 
     userStatus[userID].languageCode = newLanguageCode;
     userStatus[userID].currentMwMessageIndex = 0;
-    userStatus[userID].messages = [];
+    userStatus[userID].mwmessages = [];
 
     tgBot.sendMessage(userID, `Set the language code to ${newLanguageCode}`);
 }
@@ -91,15 +91,15 @@ function i18n(language, key) {
 function getCurrentMwMessage(userID) {
     // It will short circuit if you don't check that the object exists
     if (!Object.keys(userStatus).length ||
-        userStatus[userID].currentMwMessageIndex > userStatus[userID].messages.length
+        userStatus[userID].currentMwMessageIndex > userStatus[userID].mwmessages.length
     ) {
         userStatus[userID].currentMwMessageIndex = 0;
-        userStatus[userID].messages = [];
+        userStatus[userID].mwmessages = [];
         userStatus[userID].mode = FETCHING_MODE;
         return null;
     }
 
-    return userStatus[userID].messages[userStatus[userID].currentMwMessageIndex];
+    return userStatus[userID].mwmessages[userStatus[userID].currentMwMessageIndex];
 }
 
 function showDocumentation(userID) {
@@ -341,14 +341,14 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
         return;
     }
 
-    mwApi.getUntranslatedMessages(languageCode, (messageCollection) => {
+    mwApi.getUntranslatedMessages(languageCode, (mwMessageCollection) => {
         debug(userID, "in getUntranslatedMessages", 1);
 
         if (userStatus[userID] === undefined) {
             userStatus[userID] = {};
         }
 
-        userStatus[userID].messages = messageCollection.filter((mwMessageData) => {
+        userStatus[userID].mwmessages = mwMessageCollection.filter((mwMessageData) => {
             return validTgMessage(mwMessageData.definition);
         });
 
@@ -356,17 +356,17 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
 
         debug(
             userID,
-            `got messageCollection: ${JSON.stringify(userStatus[userID].messages, null, 2)}`,
+            `got mwMessageCollection: ${JSON.stringify(userStatus[userID].mwmessages, null, 2)}`,
             2
         );
 
         debug(
             userID,
-            `Fetched ${userStatus[userID].messages.length} untranslated messages`,
+            `Fetched ${userStatus[userID].mwmessages.length} untranslated messages`,
             1
         );
 
-        if (userStatus[userID].messages.length) {
+        if (userStatus[userID].mwmessages.length) {
             showNextMwMessage(userID);
         } else {
             tgBot.sendMessage(userID, "Nothing to translate!");
