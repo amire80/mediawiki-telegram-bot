@@ -103,15 +103,15 @@ function getCurrentMwMessage(userID) {
 }
 
 function showDocumentation(userID) {
-    const targetTranslatableMessage = getCurrentMwMessage(userID);
+    const targetMwMessage = getCurrentMwMessage(userID);
 
     if (userStatus[userID].mode !== TRANSLATING_MODE ||
-        targetTranslatableMessage === null
+        targetMwMessage === null
     ) {
         return;
     }
 
-    const title = targetTranslatableMessage.title;
+    const title = targetMwMessage.title;
     debug(userID, `Getting qqq for "${title}"`, 1);
 
     mwApi.getDocumentation(title, (documentation) => {
@@ -123,15 +123,15 @@ function showDocumentation(userID) {
 }
 
 function showTranslationMemory(userID) {
-    const targetTranslatableMessage = getCurrentMwMessage(userID);
+    const targetMwMessage = getCurrentMwMessage(userID);
 
     if (userStatus[userID].mode !== TRANSLATING_MODE ||
-        targetTranslatableMessage === null
+        targetMwMessage === null
     ) {
         return;
     }
 
-    const title = targetTranslatableMessage.title;
+    const title = targetMwMessage.title;
     debug(userID, `Getting translation memory for "${title}"`, 1);
 
     mwApi.getTranslationMemory(title, (translationMemory) => {
@@ -216,10 +216,10 @@ function showNextMwMessage(userID) {
 }
 
 function publishTranslation(userID, text) {
-    const targetTranslatableMessage = getCurrentMwMessage(userID);
+    const targetMwMessage = getCurrentMwMessage(userID);
 
     if (userStatus[userID].mode !== TRANSLATING_MODE ||
-        targetTranslatableMessage === null
+        targetMwMessage === null
     ) {
         return;
     }
@@ -342,8 +342,6 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
     }
 
     mwApi.getUntranslatedMessages(languageCode, (mwMessageCollection) => {
-        debug(userID, "in getUntranslatedMessages", 1);
-
         if (userStatus[userID] === undefined) {
             userStatus[userID] = {};
         }
@@ -387,14 +385,14 @@ tgBot.onText(/\/ttm/, (msg, match) => {
 // Matches anything without a slash in the beginning
 tgBot.onText(/^([^\/].*)/, (msg, match) => {
     const userID = msg.from.id;
-    const chatMessage = match[1];
-    const targetTranslatableMessage = getCurrentMwMessage(userID);
+    const tgMessage = match[1];
+    const targetMwMessage = getCurrentMwMessage(userID);
 
     if (userStatus[userID].mode !== TRANSLATING_MODE ||
-        targetTranslatableMessage === null
+        targetMwMessage === null
     ) {
         return;
     }
 
-    publishTranslation(userID, chatMessage);
+    publishTranslation(userID, tgMessage);
 });
