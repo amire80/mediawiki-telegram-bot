@@ -242,12 +242,13 @@ function publishTranslation(userID, text) {
     });
 }
 
-// Matches /echo [whatever]
-tgBot.onText(/\/echo (.+)/, (msg, match) => {
+// Matches /echo [whatever].
+// Just for testing. Shoudl be removed some day.
+tgBot.onText(/\/echo (.+)/, (tgMsg, match) => {
     const resp = match[1];
-    const userID = msg.from.id;
+    const userID = tgMsg.from.id;
 
-    console.log(msg);
+    console.log(tgMsg);
 
     tgBot.sendMessage(userID, resp);
 });
@@ -263,12 +264,12 @@ function validTgMessage(tgMessage) {
 }
 
 // Matches /setlanguage
-tgBot.onText(/^\/setlanguage ?(.*)/, (msg, match) => {
+tgBot.onText(/^\/setlanguage ?(.*)/, (tgMsg, match) => {
     const newLanguageCode = match[1];
-    const userID = msg.from.id;
+    const userID = tgMsg.from.id;
 
     console.log(`setlanguage. newLanguageCode is ${newLanguageCode}`);
-    console.log(msg);
+    console.log(tgMsg);
 
     debug(
         userID,
@@ -293,19 +294,19 @@ function validLanguageCode(languageCode) {
     return (typeof languageCode === "string") && (languageCode !== "");
 }
 
-tgBot.on("callback_query", (msg) => {
-    const userID = msg.from.id;
+tgBot.on("callback_query", (tgMsg) => {
+    const userID = tgMsg.from.id;
 
-    console.log("callback_query got msg:");
-    console.log(msg);
+    console.log("callback_query got tgMsg:");
+    console.log(tgMsg);
 
-    if (msg.data === "qqq") {
-        showDocumentation(msg.from.id);
+    if (tgMsg.data === "qqq") {
+        showDocumentation(tgMsg.from.id);
 
         return;
     }
 
-    const ttm = msg.data.match(/^ttm(\d+)/);
+    const ttm = tgMsg.data.match(/^ttm(\d+)/);
     if (ttm !== null) {
         publishTranslation(
             userID,
@@ -317,12 +318,12 @@ tgBot.on("callback_query", (msg) => {
 });
 
 // Matches /untranslated
-tgBot.onText(/\/untranslated/, (msg, match) => {
-    const userID = msg.from.id;
+tgBot.onText(/\/untranslated/, (tgMsg, match) => {
+    const userID = tgMsg.from.id;
     let languageCode = getLanguageCode(userID);
 
     if (!validLanguageCode(languageCode)) {
-        languageCode = msg.from.language_code;
+        languageCode = tgMsg.from.language_code;
         tgBot.sendMessage(userID, `Automatically setting language code to ${
             languageCode
             }. To change your language, use the /setlanguage command`);
@@ -373,18 +374,18 @@ tgBot.onText(/\/untranslated/, (msg, match) => {
 });
 
 // Matches /qqq
-tgBot.onText(/\/qqq/, (msg, match) => {
-    showDocumentation(msg.from.id);
+tgBot.onText(/\/qqq/, (tgMsg, match) => {
+    showDocumentation(tgMsg.from.id);
 });
 
 // Matches /ttm
-tgBot.onText(/\/ttm/, (msg, match) => {
-    showTranslationMemory(msg.from.id);
+tgBot.onText(/\/ttm/, (tgMsg, match) => {
+    showTranslationMemory(tgMsg.from.id);
 });
 
 // Matches anything without a slash in the beginning
-tgBot.onText(/^([^\/].*)/, (msg, match) => {
-    const userID = msg.from.id;
+tgBot.onText(/^([^\/].*)/, (tgMsg, match) => {
+    const userID = tgMsg.from.id;
     const tgMessage = match[1];
     const targetMwMessage = getCurrentMwMessage(userID);
 
