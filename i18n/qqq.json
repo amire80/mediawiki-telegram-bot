@@ -7,6 +7,7 @@
 	"tgbot-what-would-you-like-prompt": "A prompt that is shown as a message when there's nothing else to do.",
 	"tgbot-load-messages": "A button that appears under {{msg-tgbot|tgbot-what-would-you-like-prompt}}. Tapping the button loads new untranslated messages.",
 	"tgbot-get-documentation": "Appears on a button under a translatable message. Tapping the button sends a chat message with the documentation about the translatable message.",
+	"tgbot-your-language-is": "Shown as a message. The next message is the user's currently selected language.",
 	"tgbot-show-translations-of-similar": "Appears on a button under a translatable message. Tapping the button sends chat messages with translation of similar messages (translation memory).",
 	"tgbot-the-current-translation-is": "Shown as a chat message after a fuzzy translatable message and before its current translation."
 }

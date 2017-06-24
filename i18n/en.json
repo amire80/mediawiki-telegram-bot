@@ -6,6 +6,7 @@
 	},
 	"tgbot-what-would-you-like-prompt": "What would you like to do?",
 	"tgbot-load-messages": "Load messages to translate",
+	"tgbot-your-language-is": "Your language is:",
 	"tgbot-get-documentation": "Show documentation",
 	"tgbot-show-translations-of-similar": "Show translations of similar messages",
 	"tgbot-the-current-translation-is": "The current translation is:"

@@ -53,9 +53,21 @@ function debug(fromId, info, levelRequired) {
     tgBot.sendMessage(fromId, info);
 }
 
+const REDIRECT_LANGUAGES = {
+    "en-us": "en",
+    "iw-il": "he",
+    "iw": "he"
+};
+
+function normalizeLanguageCode(code) {
+    const lower = code.toLowerCase();
+
+    return REDIRECT_LANGUAGES[lower] || lower;
+}
+
 function initUser(userID) {
     userStatus[userID] = {
-        languageCode: "",
+        languageCode: "en",
         currentMwMessageIndex: 0,
         mwmessages: []
     };
@@ -94,6 +106,14 @@ function setLanguageCode(userID, newLanguageCode) {
 
     debug(
         userID,
+        `in setLanguageCode(), got ${newLanguageCode}`,
+        1
+    );
+
+    newLanguageCode = normalizeLanguageCode(newLanguageCode);
+
+    debug(
+        userID,
         `in setLanguageCode(), setting to ${newLanguageCode}`,
         1
     );
@@ -107,6 +127,10 @@ function setLanguageCode(userID, newLanguageCode) {
 
 // TODO: Replace with something like jquery.i18n
 function i18n(language, key) {
+    if (language === undefined) {
+        language = "en";
+    }
+
     if (i18nCache[language] === undefined) {
         try {
             i18nCache[language] = jsonfile.readFileSync(`i18n/${language}.json`);
@@ -119,7 +143,7 @@ function i18n(language, key) {
     if (typeof i18nCache[language][key] !== "string") {
         if (language === "en") {
             // Give up
-            return key;
+            return `<${key}>`;
         }
 
         // Fallback
@@ -262,7 +286,7 @@ function showUntranslated(tgMsg) {
     let languageCode = getLanguageCode(userID);
 
     if (!validLanguageCode(languageCode)) {
-        languageCode = tgMsg.from.language_code;
+        languageCode = normalizeLanguageCode(tgMsg.from.language_code);
         tgBot.sendMessage(userID, `Automatically setting language code to ${
             languageCode
             }. To change your language, use the /setlanguage command`);
@@ -354,24 +378,24 @@ tgBot.onText(/^\/setlanguage ?(.*)/, (tgMsg, match) => {
     const newLanguageCode = match[1];
     const userID = tgMsg.from.id;
 
-    console.log(`setlanguage. newLanguageCode is ${newLanguageCode}`);
-    console.log(tgMsg);
-
-    debug(
-        userID,
-        `newLanguageCode is ${newLanguageCode}`,
-        1
-    );
-
-    if (newLanguageCode === "") {
-        tgBot.sendMessage(userID, `The current language code is ${
-            getLanguageCode(userID)}`
-        );
+    if (newLanguageCode === undefined || newLanguageCode === "") {
+        const user = getUser(userID);
+        tgBot.sendMessage(userID, i18n(user.language, "tgbot-your-language-is"));
+        tgBot.sendMessage(userID, user.languageCode);
 
         return;
     }
 
-    setLanguageCode(userID, newLanguageCode);
+    console.log(`in setlanguage. The user asked to change to ${newLanguageCode}.`);
+    console.log("Received Telegram message:");
+    console.log(tgMsg);
+
+    const normalized = normalizeLanguageCode(newLanguageCode);
+    if (normalized !== newLanguageCode) {
+        console.log(`The normalized code is ${normalized}.`);
+    }
+
+    setLanguageCode(userID, normalized);
 });
 
 function documentationCallback(tgMsg) {
@@ -434,10 +458,10 @@ tgBot.onText(/^([^\/].*)/, (tgMsg, match) => {
         return;
     }
 
-    const language = i18n(getLanguageCode(userID));
+    const language = getLanguageCode(userID);
 
     const inlineKeyboard = [inlineKeyboardButton(
-        i18n(getLanguageCode(userID), "tgbot-load-messages"),
+        i18n(language, "tgbot-load-messages"),
         callbackPrefixes.LOAD_UNTRANSLATED
     )];
 

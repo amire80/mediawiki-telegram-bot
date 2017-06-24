@@ -7,6 +7,7 @@
 	"tgbot-what-would-you-like-prompt": "מה תרצה לעשות?",
 	"tgbot-load-messages": "לטעון הודעות לתרגום",
 	"tgbot-get-documentation": "הצגת תיעוד",
+	"tgbot-your-language-is": "השפה שלך היא:",
 	"tgbot-show-translations-of-similar": "הצגת תרגומים של הודעת דומות",
 	"tgbot-the-current-translation-is": "התרגום הנוכחי הוא:"
 }
