@@ -1,12 +1,9 @@
 "use strict";
 
 const TelegramBot = require("tgfancy");
-const yaml = require("js-yaml");
 
 const jsonfile = require("jsonfile");
 const i18nCache = {};
-
-const fs = require("fs");
 
 const mwApi = require("./MediaWikiAPI.js");
 
@@ -17,11 +14,8 @@ const TRANSLATING_MODE = "translating";
 
 let config;
 
-// Get document, or throw exception on error
 try {
-    config = yaml.safeLoad(fs.readFileSync(
-        "config.yaml", "utf8"
-    ));
+    config = jsonfile.readFileSync("config.json");
 } catch (e) {
     console.log(e);
 }
