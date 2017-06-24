@@ -67,7 +67,7 @@ function normalizeLanguageCode(code) {
 
 function initUser(userID) {
     userStatus[userID] = {
-        languageCode: "en",
+        languageCode: "",
         currentMwMessageIndex: 0,
         mwmessages: []
     };
@@ -107,7 +107,7 @@ function setLanguageCode(userID, newLanguageCode) {
     debug(
         userID,
         `in setLanguageCode(), got ${newLanguageCode}`,
-        1
+        2
     );
 
     newLanguageCode = normalizeLanguageCode(newLanguageCode);
@@ -115,14 +115,12 @@ function setLanguageCode(userID, newLanguageCode) {
     debug(
         userID,
         `in setLanguageCode(), setting to ${newLanguageCode}`,
-        1
+        2
     );
 
     user.languageCode = newLanguageCode;
     user.currentMwMessageIndex = 0;
     user.mwmessages = [];
-
-    tgBot.sendMessage(userID, `Set the language code to ${newLanguageCode}`);
 }
 
 // TODO: Replace with something like jquery.i18n
@@ -281,28 +279,53 @@ function showCurrentMwMessage(userID) {
     });
 }
 
+// Automatically sets the language code from the language
+// of the chat message.
+// Returns false if the language in the message was not valid,
+// true otherwise.
+function autoSetLanguage(tgMsg) {
+    const userID = tgMsg.from.id;
+    const newLanguageCode = normalizeLanguageCode(tgMsg.from.language_code);
+
+    if (!validLanguageCode(newLanguageCode)) {
+        tgBot.sendMessage(
+            userID,
+            `Your auto-detected language code is "${newLanguageCode}". It is not valid.`
+        );
+
+        return false;
+    }
+
+    tgBot.sendMessage(
+        userID,
+        i18n(newLanguageCode, "tgbot-automatically-setting-your-language")
+    );
+
+    tgBot.sendMessage(
+        userID,
+        newLanguageCode
+    );
+
+    tgBot.sendMessage(
+        userID,
+        i18n(newLanguageCode, "tgbot-to-change-your-language")
+    );
+
+    setLanguageCode(userID, newLanguageCode);
+
+    return true;
+}
+
 function showUntranslated(tgMsg) {
     const userID = tgMsg.from.id;
-    let languageCode = getLanguageCode(userID);
-
-    if (!validLanguageCode(languageCode)) {
-        languageCode = normalizeLanguageCode(tgMsg.from.language_code);
-        tgBot.sendMessage(userID, `Automatically setting language code to ${
-            languageCode
-            }. To change your language, use the /setlanguage command`);
-
-        setLanguageCode(userID, languageCode);
-    }
+    const languageCode = getLanguageCode(userID);
 
     debug(userID, "in onText untranslated", 1);
 
     if (!validLanguageCode(languageCode)) {
-        tgBot.sendMessage(
-            userID,
-            `your language code is "${languageCode}" and it is not valid.`
-        );
-
-        return;
+        if (!autoSetLanguage(tgMsg)) {
+            return;
+        }
     }
 
     mwApi.getUntranslatedMessages(languageCode, (mwMessageCollection) => {
@@ -458,10 +481,17 @@ tgBot.onText(/^([^\/].*)/, (tgMsg, match) => {
         return;
     }
 
-    const language = getLanguageCode(userID);
+    let languageCode = getLanguageCode(userID);
+    if (!validLanguageCode(languageCode)) {
+        if (!autoSetLanguage(tgMsg)) {
+            return;
+        }
+
+        languageCode = getLanguageCode(userID);
+    }
 
     const inlineKeyboard = [inlineKeyboardButton(
-        i18n(language, "tgbot-load-messages"),
+        i18n(languageCode, "tgbot-load-messages"),
         callbackPrefixes.LOAD_UNTRANSLATED
     )];
 
@@ -473,7 +503,7 @@ tgBot.onText(/^([^\/].*)/, (tgMsg, match) => {
 
     tgBot.sendMessage(
         userID,
-        i18n(language, "tgbot-what-would-you-like-prompt"),
+        i18n(languageCode, "tgbot-what-would-you-like-prompt"),
         tgMsgOptions
     );
 });

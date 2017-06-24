@@ -8,6 +8,8 @@
 	"tgbot-load-messages": "לטעון הודעות לתרגום",
 	"tgbot-get-documentation": "הצגת תיעוד",
 	"tgbot-your-language-is": "השפה שלך היא:",
+	"tgbot-automatically-setting-your-language": "השפה שלך מוגדרת באופן אוטומטי ל:",
+	"tgbot-to-change-your-language": "כדי לשנות את השפה שלך, יש להריץ את הפקודה /setlanguage",
 	"tgbot-show-translations-of-similar": "הצגת תרגומים של הודעת דומות",
 	"tgbot-the-current-translation-is": "התרגום הנוכחי הוא:"
 }
