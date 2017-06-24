@@ -4,6 +4,9 @@
 			"Amire80"
 		]
 	},
-	"tgbot-get-documentation": "קבלת תיעוד",
+	"tgbot-what-would-you-like-prompt": "מה תרצה לעשות?",
+	"tgbot-load-messages": "לטעון הודעות לתרגום",
+	"tgbot-get-documentation": "הצגת תיעוד",
+	"tgbot-show-translations-of-similar": "הצגת תרגומים של הודעת דומות",
 	"tgbot-the-current-translation-is": "התרגום הנוכחי הוא:"
 }

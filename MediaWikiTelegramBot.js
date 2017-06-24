@@ -12,6 +12,29 @@ const userStatus = {};
 const FETCHING_MODE = "fetching";
 const TRANSLATING_MODE = "translating";
 
+const callbackPrefixes = {
+    LOAD_UNTRANSLATED: "load",
+    DOCUMENTATION: "qqq",
+    TRANSLATION_MEMORY: "ttm"
+};
+
+const callbackActionsKeys = Object.keys(callbackPrefixes);
+const callbackActions = {};
+for (let i = 0; i < callbackActionsKeys.length; i++) {
+    callbackActions[callbackPrefixes[callbackActionsKeys[i]]] = callbackActionsKeys[i];
+}
+
+console.log(callbackActions);
+
+function callbackString(action, params) {
+    const json = { action, params };
+    return JSON.stringify(json);
+}
+
+function inlineKeyboardButton(text, action, params) {
+    return [{ text, callback_data: callbackString(action, params) }];
+}
+
 let config;
 
 try {
@@ -30,30 +53,54 @@ function debug(fromId, info, levelRequired) {
     tgBot.sendMessage(fromId, info);
 }
 
-function getLanguageCode(userID) {
-    if (userStatus[userID] === undefined) {
-        userStatus[userID] = {};
+function initUser(userID) {
+    userStatus[userID] = {
+        languageCode: "",
+        currentMwMessageIndex: 0,
+        mwmessages: []
+    };
+}
 
-        return "";
+function getUser(userID) {
+    if (userStatus[userID] === undefined) {
+        initUser(userID);
     }
 
-    return userStatus[userID].languageCode;
+    return userStatus[userID];
+}
+
+// Returns true if the parameter contains
+// a string that can be sent to Telegram.
+function validTgMessage(tgMessage) {
+    return (typeof tgMessage === "string") &&
+        // Telegram messages cannot be empty strings
+        (tgMessage !== "") &&
+        // The Telegram length hard limit is 4096
+        (tgMessage.length < 4096);
+}
+
+// TODO: Should be much, much more deatiled.
+// For now only checks that it's a string and it's not empty defined.
+function validLanguageCode(languageCode) {
+    return (typeof languageCode === "string") && (languageCode !== "");
+}
+
+function getLanguageCode(userID) {
+    return getUser(userID).languageCode;
 }
 
 function setLanguageCode(userID, newLanguageCode) {
+    const user = getUser(userID);
+
     debug(
         userID,
         `in setLanguageCode(), setting to ${newLanguageCode}`,
         1
     );
 
-    if (userStatus[userID] === undefined) {
-        userStatus[userID] = {};
-    }
-
-    userStatus[userID].languageCode = newLanguageCode;
-    userStatus[userID].currentMwMessageIndex = 0;
-    userStatus[userID].mwmessages = [];
+    user.languageCode = newLanguageCode;
+    user.currentMwMessageIndex = 0;
+    user.mwmessages = [];
 
     tgBot.sendMessage(userID, `Set the language code to ${newLanguageCode}`);
 }
@@ -83,23 +130,24 @@ function i18n(language, key) {
 }
 
 function getCurrentMwMessage(userID) {
-    // It will short circuit if you don't check that the object exists
-    if (!Object.keys(userStatus).length ||
-        userStatus[userID].currentMwMessageIndex > userStatus[userID].mwmessages.length
-    ) {
-        userStatus[userID].currentMwMessageIndex = 0;
-        userStatus[userID].mwmessages = [];
-        userStatus[userID].mode = FETCHING_MODE;
+    const user = getUser(userID);
+
+    if (user.currentMwMessageIndex > user.mwmessages.length) {
+        user.currentMwMessageIndex = 0;
+        user.mwmessages = [];
+        user.mode = FETCHING_MODE;
+
         return null;
     }
 
-    return userStatus[userID].mwmessages[userStatus[userID].currentMwMessageIndex];
+    return user.mwmessages[user.currentMwMessageIndex];
 }
 
 function showDocumentation(userID) {
     const targetMwMessage = getCurrentMwMessage(userID);
+    const user = getUser(userID);
 
-    if (userStatus[userID].mode !== TRANSLATING_MODE ||
+    if (user.mode !== TRANSLATING_MODE ||
         targetMwMessage === null
     ) {
         return;
@@ -118,8 +166,9 @@ function showDocumentation(userID) {
 
 function showTranslationMemory(userID) {
     const targetMwMessage = getCurrentMwMessage(userID);
+    const user = getUser(userID);
 
-    if (userStatus[userID].mode !== TRANSLATING_MODE ||
+    if (user.mode !== TRANSLATING_MODE ||
         targetMwMessage === null
     ) {
         return;
@@ -148,42 +197,40 @@ function showTranslationMemory(userID) {
     });
 }
 
-function showNextMwMessage(userID) {
-    const currentMwMessage = getCurrentMwMessage(userID);
+function showCurrentMwMessage(userID) {
+    const targetMwMessage = getCurrentMwMessage(userID);
 
-    if (currentMwMessage === undefined) {
+    if (targetMwMessage === undefined) {
         // TODO: Show the welcome menu instead
         return;
     }
 
-    console.log(currentMwMessage);
+    console.log(targetMwMessage);
 
-    mwApi.getTranslationMemory(currentMwMessage.title, (translationMemory) => {
-        let i;
-
-        currentMwMessage.translationMemory = translationMemory;
+    mwApi.getTranslationMemory(targetMwMessage.title, (translationMemory) => {
+        targetMwMessage.translationMemory = translationMemory;
 
         debug(userID, "in getTranslationMemory's callback", 1);
 
-        if (currentMwMessage.translationMemory.length === 0) {
+        if (targetMwMessage.translationMemory.length === 0) {
             console.log(
                 userID,
-                `No translation memory was found for "${currentMwMessage.title}"`
+                `No translation memory was found for "${targetMwMessage.title}"`
             );
         }
 
-        const inlineKeyboard = [
-            [{
-                text: i18n(getLanguageCode(userID), "tgbot-get-documentation"),
-                callback_data: "qqq"
-            }]
-        ];
+        const inlineKeyboard = [];
 
-        for (i = 0; i < currentMwMessage.translationMemory.length; i++) {
-            inlineKeyboard.push([{
-                text: currentMwMessage.translationMemory[i].target,
-                callback_data: `ttm${i}`
-            }]);
+        inlineKeyboard.push(inlineKeyboardButton(
+            i18n(getLanguageCode(userID), "tgbot-get-documentation"),
+            callbackPrefixes.DOCUMENTATION
+        ));
+
+        if (targetMwMessage.translationMemory.length) {
+            inlineKeyboard.push(inlineKeyboardButton(
+                i18n(getLanguageCode(userID), "tgbot-show-translations-of-similar"),
+                callbackPrefixes.TRANSLATION_MEMORY
+            ));
         }
 
         const tgMsgOptions = {
@@ -194,25 +241,80 @@ function showNextMwMessage(userID) {
 
         tgBot.sendMessage(
             userID,
-            currentMwMessage.definition,
+            targetMwMessage.definition,
             tgMsgOptions
         );
 
-        if (currentMwMessage.translation !== null) {
+        if (targetMwMessage.translation !== null) {
             tgBot.sendMessage(
                 userID,
                 i18n(getLanguageCode(userID), "tgbot-the-current-translation-is")
             );
-            tgBot.sendMessage(userID, currentMwMessage.translation);
+            tgBot.sendMessage(userID, targetMwMessage.translation);
         }
-        userStatus[userID].mode = TRANSLATING_MODE;
+        const user = getUser(userID);
+        user.mode = TRANSLATING_MODE;
+    });
+}
+
+function showUntranslated(tgMsg) {
+    const userID = tgMsg.from.id;
+    let languageCode = getLanguageCode(userID);
+
+    if (!validLanguageCode(languageCode)) {
+        languageCode = tgMsg.from.language_code;
+        tgBot.sendMessage(userID, `Automatically setting language code to ${
+            languageCode
+            }. To change your language, use the /setlanguage command`);
+
+        setLanguageCode(userID, languageCode);
+    }
+
+    debug(userID, "in onText untranslated", 1);
+
+    if (!validLanguageCode(languageCode)) {
+        tgBot.sendMessage(
+            userID,
+            `your language code is "${languageCode}" and it is not valid.`
+        );
+
+        return;
+    }
+
+    mwApi.getUntranslatedMessages(languageCode, (mwMessageCollection) => {
+        const user = getUser(userID);
+
+        user.mwmessages = mwMessageCollection.filter((mwMessageData) => {
+            return validTgMessage(mwMessageData.definition);
+        });
+
+        user.currentMwMessageIndex = 0;
+
+        debug(
+            userID,
+            `got mwMessageCollection: ${JSON.stringify(user.mwmessages, null, 2)}`,
+            2
+        );
+
+        debug(
+            userID,
+            `Fetched ${user.mwmessages.length} untranslated messages`,
+            1
+        );
+
+        if (user.mwmessages.length) {
+            showCurrentMwMessage(userID);
+        } else {
+            tgBot.sendMessage(userID, "Nothing to translate!");
+        }
     });
 }
 
 function publishTranslation(userID, text) {
     const targetMwMessage = getCurrentMwMessage(userID);
+    const user = getUser(userID);
 
-    if (userStatus[userID].mode !== TRANSLATING_MODE ||
+    if (user.mode !== TRANSLATING_MODE ||
         targetMwMessage === null
     ) {
         return;
@@ -228,9 +330,9 @@ function publishTranslation(userID, text) {
             () => {
                 debug(userID, "Translation published", 1);
 
-                userStatus[userID].currentMwMessageIndex++;
+                user.currentMwMessageIndex++;
 
-                showNextMwMessage(userID);
+                showCurrentMwMessage(userID);
             }
         );
     });
@@ -246,16 +348,6 @@ tgBot.onText(/\/echo (.+)/, (tgMsg, match) => {
 
     tgBot.sendMessage(userID, resp);
 });
-
-// Returns true if the parameter contains
-// a string that can be sent to Telegram.
-function validTgMessage(tgMessage) {
-    return (typeof tgMessage === "string") &&
-        // Telegram messages cannot be empty strings
-        (tgMessage !== "") &&
-        // The Telegram length hard limit is 4096
-        (tgMessage.length < 4096);
-}
 
 // Matches /setlanguage
 tgBot.onText(/^\/setlanguage ?(.*)/, (tgMsg, match) => {
@@ -282,89 +374,39 @@ tgBot.onText(/^\/setlanguage ?(.*)/, (tgMsg, match) => {
     setLanguageCode(userID, newLanguageCode);
 });
 
-// TODO: Should be much, much more deatiled.
-// For now only checks that it's a string and it's not empty defined.
-function validLanguageCode(languageCode) {
-    return (typeof languageCode === "string") && (languageCode !== "");
+function documentationCallback(tgMsg) {
+    showDocumentation(tgMsg.from.id);
 }
 
-tgBot.on("callback_query", (tgMsg) => {
-    const userID = tgMsg.from.id;
+function translationMemoryCallback(tgMsg) {
+    showTranslationMemory(tgMsg.from.id);
+}
 
+function loadMessagesCallback(tgMsg) {
+    showUntranslated(tgMsg);
+}
+
+const callbackFunctions = {
+    LOAD_UNTRANSLATED: loadMessagesCallback,
+    DOCUMENTATION: documentationCallback,
+    TRANSLATION_MEMORY: translationMemoryCallback
+};
+
+tgBot.on("callback_query", (tgMsg) => {
     console.log("callback_query got tgMsg:");
     console.log(tgMsg);
 
-    if (tgMsg.data === "qqq") {
-        showDocumentation(tgMsg.from.id);
+    const callbackData = JSON.parse(tgMsg.data);
 
-        return;
-    }
+    console.log("Parsed callback data:");
+    console.log(callbackData);
 
-    const ttm = tgMsg.data.match(/^ttm(\d+)/);
-    if (ttm !== null) {
-        publishTranslation(
-            userID,
-            getCurrentMwMessage(userID).translationMemory[ttm[1]].target
-        );
-
-        return;
-    }
+    callbackFunctions[callbackActions[callbackData.action]].call(null, tgMsg);
 });
 
 // Matches /untranslated
 tgBot.onText(/\/untranslated/, (tgMsg, match) => {
-    const userID = tgMsg.from.id;
-    let languageCode = getLanguageCode(userID);
-
-    if (!validLanguageCode(languageCode)) {
-        languageCode = tgMsg.from.language_code;
-        tgBot.sendMessage(userID, `Automatically setting language code to ${
-            languageCode
-            }. To change your language, use the /setlanguage command`);
-
-        setLanguageCode(userID, languageCode);
-    }
-
-    debug(userID, "in onText untranslated", 1);
-
-    if (!validLanguageCode(languageCode)) {
-        tgBot.sendMessage(
-            userID,
-            `your language code is "${languageCode}" and it is not valid.`
-        );
-
-        return;
-    }
-
-    mwApi.getUntranslatedMessages(languageCode, (mwMessageCollection) => {
-        if (userStatus[userID] === undefined) {
-            userStatus[userID] = {};
-        }
-
-        userStatus[userID].mwmessages = mwMessageCollection.filter((mwMessageData) => {
-            return validTgMessage(mwMessageData.definition);
-        });
-
-        userStatus[userID].currentMwMessageIndex = 0;
-
-        debug(
-            userID,
-            `got mwMessageCollection: ${JSON.stringify(userStatus[userID].mwmessages, null, 2)}`,
-            2
-        );
-
-        debug(
-            userID,
-            `Fetched ${userStatus[userID].mwmessages.length} untranslated messages`,
-            1
-        );
-
-        if (userStatus[userID].mwmessages.length) {
-            showNextMwMessage(userID);
-        } else {
-            tgBot.sendMessage(userID, "Nothing to translate!");
-        }
-    });
+    showUntranslated(tgMsg);
 });
 
 // Matches /qqq
@@ -380,14 +422,34 @@ tgBot.onText(/\/ttm/, (tgMsg, match) => {
 // Matches anything without a slash in the beginning
 tgBot.onText(/^([^\/].*)/, (tgMsg, match) => {
     const userID = tgMsg.from.id;
+    const user = getUser(userID);
     const tgMessage = match[1];
     const targetMwMessage = getCurrentMwMessage(userID);
 
-    if (userStatus[userID].mode !== TRANSLATING_MODE ||
-        targetMwMessage === null
+    if (user.mode === TRANSLATING_MODE &&
+        targetMwMessage !== null
     ) {
+        publishTranslation(userID, tgMessage);
+
         return;
     }
 
-    publishTranslation(userID, tgMessage);
+    const language = i18n(getLanguageCode(userID));
+
+    const inlineKeyboard = [inlineKeyboardButton(
+        i18n(getLanguageCode(userID), "tgbot-load-messages"),
+        callbackPrefixes.LOAD_UNTRANSLATED
+    )];
+
+    const tgMsgOptions = {
+        reply_markup: JSON.stringify({
+            inline_keyboard: inlineKeyboard
+        })
+    };
+
+    tgBot.sendMessage(
+        userID,
+        i18n(language, "tgbot-what-would-you-like-prompt"),
+        tgMsgOptions
+    );
 });
