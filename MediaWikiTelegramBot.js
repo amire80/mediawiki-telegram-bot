@@ -358,9 +358,11 @@ function showUntranslated(tgMsg) {
     });
 }
 
-function publishTranslation(userID, text) {
+function publishTranslation(tgMsg) {
+    const userID = tgMsg.from.id;
     const targetMwMessage = getCurrentMwMessage(userID);
     const user = getUser(userID);
+    const text = tgMsg.text;
 
     if (user.mode !== TRANSLATING_MODE ||
         targetMwMessage === null
@@ -469,15 +471,17 @@ tgBot.onText(/\/ttm/, (tgMsg, match) => {
 
 // Matches anything without a slash in the beginning
 tgBot.onText(/^([^\/].*)/, (tgMsg, match) => {
+    console.log("In slashless onText");
+    console.log(tgMsg);
+
     const userID = tgMsg.from.id;
     const user = getUser(userID);
-    const tgMessage = match[1];
     const targetMwMessage = getCurrentMwMessage(userID);
 
     if (user.mode === TRANSLATING_MODE &&
         targetMwMessage !== null
     ) {
-        publishTranslation(userID, tgMessage);
+        publishTranslation(tgMsg);
 
         return;
     }
