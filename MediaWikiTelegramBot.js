@@ -69,7 +69,8 @@ function initUser(userID) {
     userStatus[userID] = {
         languageCode: "",
         currentMwMessageIndex: 0,
-        mwmessages: []
+        loadedMwMessages: [],
+        publishingTgMessages: {}
     };
 }
 
@@ -121,7 +122,7 @@ function setLanguageCode(userID, newLanguageCode) {
     user.mode = FETCHING_MODE;
     user.languageCode = newLanguageCode;
     user.currentMwMessageIndex = 0;
-    user.mwmessages = [];
+    user.loadedMwMessages = [];
 }
 
 // TODO: Replace with something like jquery.i18n
@@ -155,15 +156,15 @@ function i18n(language, key) {
 function getCurrentMwMessage(userID) {
     const user = getUser(userID);
 
-    if (user.currentMwMessageIndex > user.mwmessages.length) {
+    if (user.currentMwMessageIndex > user.loadedMwMessages.length) {
         user.currentMwMessageIndex = 0;
-        user.mwmessages = [];
+        user.loadedMwMessages = [];
         user.mode = FETCHING_MODE;
 
         return null;
     }
 
-    return user.mwmessages[user.currentMwMessageIndex];
+    return user.loadedMwMessages[user.currentMwMessageIndex];
 }
 
 function showDocumentation(userID) {
@@ -280,6 +281,13 @@ function showCurrentMwMessage(userID) {
     });
 }
 
+function advanceMwMessage(userID) {
+    const user = getUser(userID);
+
+    user.currentMwMessageIndex++;
+    showCurrentMwMessage(userID);
+}
+
 // Automatically sets the language code from the language
 // of the chat message.
 // Returns false if the language in the message was not valid,
@@ -332,7 +340,7 @@ function showUntranslated(tgMsg) {
     mwApi.getUntranslatedMessages(languageCode, (mwMessageCollection) => {
         const user = getUser(userID);
 
-        user.mwmessages = mwMessageCollection.filter((mwMessageData) => {
+        user.loadedMwMessages = mwMessageCollection.filter((mwMessageData) => {
             return validTgMessage(mwMessageData.definition);
         });
 
@@ -340,17 +348,17 @@ function showUntranslated(tgMsg) {
 
         debug(
             userID,
-            `got mwMessageCollection: ${JSON.stringify(user.mwmessages, null, 2)}`,
+            `got mwMessageCollection: ${JSON.stringify(user.loadedMwMessages, null, 2)}`,
             2
         );
 
         debug(
             userID,
-            `Fetched ${user.mwmessages.length} untranslated messages`,
+            `Fetched ${user.loadedMwMessages.length} untranslated messages`,
             1
         );
 
-        if (user.mwmessages.length) {
+        if (user.loadedMwMessages.length) {
             showCurrentMwMessage(userID);
         } else {
             tgBot.sendMessage(userID, "Nothing to translate!");
@@ -358,9 +366,21 @@ function showUntranslated(tgMsg) {
     });
 }
 
-function publishTranslation(tgMsg) {
+function tgMessageUID(tgMsg) {
+    return `${tgMsg.chat.id}/${tgMsg.message_id}`;
+}
+
+function storePublishingTgMessage(tgMsg, mwMessage) {
+    const user = getUser(tgMsg.from.id);
+    user.publishingTgMessages[tgMessageUID(tgMsg)] = mwMessage;
+}
+
+function getStoredPublishedMwMessage(tgMsg) {
+    return getUser(tgMsg.from.id).publishingTgMessages[tgMessageUID(tgMsg)];
+}
+
+function publishTranslation(tgMsg, targetMwMessage) {
     const userID = tgMsg.from.id;
-    const targetMwMessage = getCurrentMwMessage(userID);
     const user = getUser(userID);
     const text = tgMsg.text;
 
@@ -376,15 +396,13 @@ function publishTranslation(tgMsg) {
     // It really should try to reuse the login sessions.
     mwApi.login(config.username, config.password, () => {
         mwApi.addTranslation(
-            getCurrentMwMessage(userID).title,
+            targetMwMessage.title,
             text,
             "Made with Telegram Bot",
             () => {
                 debug(userID, "Translation published", 1);
 
-                user.currentMwMessageIndex++;
-
-                showCurrentMwMessage(userID);
+                storePublishingTgMessage(tgMsg, targetMwMessage);
             }
         );
     });
@@ -456,6 +474,22 @@ tgBot.on("callback_query", (tgMsg) => {
     callbackFunctions[callbackActions[callbackData.action]].call(null, tgMsg);
 });
 
+tgBot.on("edited_message", (tgMsg) => {
+    console.log("edited_message got tgMsg:");
+    console.log(tgMsg);
+    const storedPublishedMwMessage = getStoredPublishedMwMessage(tgMsg);
+
+    if (getStoredPublishedMwMessage(tgMsg) === null) {
+        debug(tgMsg.from.id, "No corresponding message found", 1);
+
+        return;
+    }
+
+    debug(tgMsg.from.id, `Publishing amendment to ${storedPublishedMwMessage.title}`);
+
+    publishTranslation(tgMsg, storedPublishedMwMessage);
+});
+
 // Matches /untranslated
 tgBot.onText(/\/untranslated/, (tgMsg, match) => {
     showUntranslated(tgMsg);
@@ -483,7 +517,8 @@ tgBot.onText(/^([^\/].*)/, (tgMsg, match) => {
     if (user.mode === TRANSLATING_MODE &&
         targetMwMessage !== null
     ) {
-        publishTranslation(tgMsg);
+        publishTranslation(tgMsg, targetMwMessage);
+        advanceMwMessage(userID);
 
         return;
     }
