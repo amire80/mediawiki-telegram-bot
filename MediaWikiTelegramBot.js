@@ -83,12 +83,12 @@ function getUser(userID) {
 
 // Returns true if the parameter contains
 // a string that can be sent to Telegram.
-function validTgMessage(tgMessage) {
-    return (typeof tgMessage === "string") &&
+function validTgMessage(tgMsg) {
+    return (typeof tgMsg === "string") &&
         // Telegram messages cannot be empty strings
-        (tgMessage !== "") &&
+        (tgMsg !== "") &&
         // The Telegram length hard limit is 4096
-        (tgMessage.length < 4096);
+        (tgMsg.length < 4096);
 }
 
 // TODO: Should be much, much more deatiled.
