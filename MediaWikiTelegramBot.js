@@ -372,6 +372,8 @@ function publishTranslation(tgMsg) {
 
     debug(userID, `Got translation "${text}", getting token`, 1);
 
+    // TODO: Now it logs in every single time.
+    // It really should try to reuse the login sessions.
     mwApi.login(config.username, config.password, () => {
         mwApi.addTranslation(
             getCurrentMwMessage(userID).title,
