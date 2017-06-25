@@ -118,6 +118,7 @@ function setLanguageCode(userID, newLanguageCode) {
         2
     );
 
+    user.mode = FETCHING_MODE;
     user.languageCode = newLanguageCode;
     user.currentMwMessageIndex = 0;
     user.mwmessages = [];
