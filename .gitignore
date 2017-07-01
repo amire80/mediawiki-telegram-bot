@@ -3,7 +3,7 @@ logs
 *.log
 npm-debug.log*
 
-#Editor backups
+# Editor backups
 *.swp
 
 # Runtime data
@@ -37,4 +37,3 @@ node_modules
 
 # Service configuration. Expected to be local and private.
 config.json
-
