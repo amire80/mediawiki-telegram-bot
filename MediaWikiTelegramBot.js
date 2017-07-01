@@ -92,7 +92,7 @@ function validTgMessage(tgMsg) {
         (tgMsg.length < 4096);
 }
 
-// TODO: Should be much, much more deatiled.
+// TODO: Should be much, much more detailed.
 // For now only checks that it's a string and it's not empty defined.
 function validLanguageCode(languageCode) {
     return (typeof languageCode === "string") && (languageCode !== "");
