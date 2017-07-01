@@ -15,7 +15,8 @@ const TRANSLATING_MODE = "translating";
 const callbackPrefixes = {
     LOAD_UNTRANSLATED: "load",
     DOCUMENTATION: "qqq",
-    TRANSLATION_MEMORY: "ttm"
+    TRANSLATION_MEMORY: "ttm",
+    SKIP: "skip"
 };
 
 const callbackActionsKeys = Object.keys(callbackPrefixes);
@@ -245,17 +246,25 @@ function showCurrentMwMessage(userID) {
 
         const inlineKeyboard = [];
 
+        // Message documentation button
         inlineKeyboard.push(inlineKeyboardButton(
             i18n(getLanguageCode(userID), "tgbot-get-documentation"),
             callbackPrefixes.DOCUMENTATION
         ));
 
+        // Similar translations button, if any are available
         if (targetMwMessage.translationMemory.length) {
             inlineKeyboard.push(inlineKeyboardButton(
                 i18n(getLanguageCode(userID), "tgbot-show-translations-of-similar"),
                 callbackPrefixes.TRANSLATION_MEMORY
             ));
         }
+
+        // Skip message button
+        inlineKeyboard.push(inlineKeyboardButton(
+            i18n(getLanguageCode(userID), "tgbot-skip-current-message"),
+            callbackPrefixes.SKIP
+        ));
 
         const tgMsgOptions = {
             reply_markup: JSON.stringify({
@@ -284,7 +293,38 @@ function showCurrentMwMessage(userID) {
 function advanceMwMessage(userID) {
     const user = getUser(userID);
 
+    // Make sure there is another message to translate
+    if( user.currentMwMessageIndex + 1 >= user.loadedMwMessages.length ) {
+        user.currentMwMessageIndex = 0;
+        user.loadedMwMessages = [];
+
+        // Prepare the fetch untranslated button
+        const inlineKeyboard = [inlineKeyboardButton(
+            i18n(getLanguageCode(userID), "tgbot-load-messages"),
+            callbackPrefixes.LOAD_UNTRANSLATED
+        )];
+
+        const tgMsgOptions = {
+            reply_markup: JSON.stringify({
+                inline_keyboard: inlineKeyboard
+            })
+        };
+
+        tgBot.sendMessage(
+            userID,
+            i18n(getLanguageCode(userID), "tgbot-no-untranslated-messages-left"),
+            tgMsgOptions
+        );
+
+        return;
+    }
+
+    // Show them next message
     user.currentMwMessageIndex++;
+    tgBot.sendMessage(
+        userID,
+        'The next message is: '
+    );
     showCurrentMwMessage(userID);
 }
 
@@ -456,10 +496,15 @@ function loadMessagesCallback(tgMsg) {
     showUntranslated(tgMsg);
 }
 
+function skipMessageCallback(tgMsg) {
+    advanceMwMessage(tgMsg.from.id);
+}
+
 const callbackFunctions = {
     LOAD_UNTRANSLATED: loadMessagesCallback,
     DOCUMENTATION: documentationCallback,
-    TRANSLATION_MEMORY: translationMemoryCallback
+    TRANSLATION_MEMORY: translationMemoryCallback,
+    SKIP: skipMessageCallback
 };
 
 tgBot.on("callback_query", (tgMsg) => {

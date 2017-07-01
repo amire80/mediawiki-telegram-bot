@@ -11,5 +11,7 @@
 	"tgbot-to-change-your-language": "To change your language, use the /setlanguage command",
 	"tgbot-get-documentation": "Show documentation",
 	"tgbot-show-translations-of-similar": "Show translations of similar messages",
-	"tgbot-the-current-translation-is": "The current translation is:"
+	"tgbot-the-current-translation-is": "The current translation is:",
+	"tgbot-skip-current-message": "Skip translating this message",
+	"tgbot-no-untranslated-messages-left": "No more messages to translate. Please fetch more."
 }

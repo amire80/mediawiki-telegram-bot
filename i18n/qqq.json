@@ -11,5 +11,7 @@
 	"tgbot-automatically-setting-your-language": "Shown as a message. The next message is a language code.",
 	"tgbot-to-change-your-language": "Shown as a message after {{mwg-tgbot|tgbot-automatically-setting-your-language}}.",
 	"tgbot-show-translations-of-similar": "Appears on a button under a translatable message. Tapping the button sends chat messages with translation of similar messages (translation memory).",
-	"tgbot-the-current-translation-is": "Shown as a chat message after a fuzzy translatable message and before its current translation."
+	"tgbot-the-current-translation-is": "Shown as a chat message after a fuzzy translatable message and before its current translation.",
+	"tgbot-skip-current-message": "Appears on a button under a translateable message. Tapping the button allows user to skip translating the current message.",
+	"tgbot-no-untranslated-messages-left": "Shown as a chat message when a user has no messages left from the current query to translate."
 }
