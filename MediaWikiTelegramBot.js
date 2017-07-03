@@ -576,6 +576,11 @@ tgBot.onText(/^([^\/].*)/, (tgMsg, match) => {
     let languageCode = getLanguageCode(userID);
     if (!validLanguageCode(languageCode)) {
         if (!autoSetLanguage(tgMsg)) {
+            tgBot.sendMessage(
+                userID,
+                `Couldn't set your language. This language code seems invalid: ${languageCode}`
+            );
+
             return;
         }
 
@@ -583,7 +588,7 @@ tgBot.onText(/^([^\/].*)/, (tgMsg, match) => {
     }
 
     const inlineKeyboard = [
-        createGetUntranslatedMessagesButton()
+        createGetUntranslatedMessagesButton(userID)
     ];
 
     const tgMsgOptions = {
