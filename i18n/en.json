@@ -13,5 +13,6 @@
 	"tgbot-show-translations-of-similar": "Show translations of similar messages",
 	"tgbot-the-current-translation-is": "The current translation is:",
 	"tgbot-skip-current-message": "Skip translating this message",
-	"tgbot-no-untranslated-messages-left": "No more messages to translate. Please fetch more."
+	"tgbot-no-untranslated-messages-left": "No more messages to translate. Please fetch more.",
+	"tgbot-next-message": "The next untranslated message is: "
 }

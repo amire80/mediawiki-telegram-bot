@@ -13,5 +13,6 @@
 	"tgbot-show-translations-of-similar": "Appears on a button under a translatable message. Tapping the button sends chat messages with translation of similar messages (translation memory).",
 	"tgbot-the-current-translation-is": "Shown as a chat message after a fuzzy translatable message and before its current translation.",
 	"tgbot-skip-current-message": "Appears on a button under a translateable message. Tapping the button allows user to skip translating the current message.",
-	"tgbot-no-untranslated-messages-left": "Shown as a chat message when a user has no messages left from the current query to translate."
+	"tgbot-no-untranslated-messages-left": "Shown as a chat message when a user has no messages left from the current query to translate.",
+	"tgbot-next-message": "Shown as a chat message after a user skips the current untranslated message and before the next untranslated message is displayed."
 }

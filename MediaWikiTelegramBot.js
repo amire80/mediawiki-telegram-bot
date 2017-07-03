@@ -290,19 +290,23 @@ function showCurrentMwMessage(userID) {
     });
 }
 
+function createGetUntranslatedMessagesButton(userID) {
+    return [inlineKeyboardButton(
+        i18n(getLanguageCode(userID), "tgbot-load-messages"),
+        callbackPrefixes.LOAD_UNTRANSLATED
+    )];
+}
+
 function advanceMwMessage(userID) {
     const user = getUser(userID);
 
     // Make sure there is another message to translate
-    if( user.currentMwMessageIndex + 1 >= user.loadedMwMessages.length ) {
+    if (user.currentMwMessageIndex + 1 >= user.loadedMwMessages.length) {
         user.currentMwMessageIndex = 0;
         user.loadedMwMessages = [];
 
         // Prepare the fetch untranslated button
-        const inlineKeyboard = [inlineKeyboardButton(
-            i18n(getLanguageCode(userID), "tgbot-load-messages"),
-            callbackPrefixes.LOAD_UNTRANSLATED
-        )];
+        const inlineKeyboard = createGetUntranslatedMessagesButton(userID);
 
         const tgMsgOptions = {
             reply_markup: JSON.stringify({
@@ -323,7 +327,7 @@ function advanceMwMessage(userID) {
     user.currentMwMessageIndex++;
     tgBot.sendMessage(
         userID,
-        'The next message is: '
+        i18n(getLanguageCode(userID), "tgbot-next-message")
     );
     showCurrentMwMessage(userID);
 }
@@ -577,10 +581,7 @@ tgBot.onText(/^([^\/].*)/, (tgMsg, match) => {
         languageCode = getLanguageCode(userID);
     }
 
-    const inlineKeyboard = [inlineKeyboardButton(
-        i18n(languageCode, "tgbot-load-messages"),
-        callbackPrefixes.LOAD_UNTRANSLATED
-    )];
+    const inlineKeyboard = createGetUntranslatedMessagesButton();
 
     const tgMsgOptions = {
         reply_markup: JSON.stringify({
