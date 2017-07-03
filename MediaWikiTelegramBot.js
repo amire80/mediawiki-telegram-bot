@@ -290,10 +290,10 @@ function showCurrentMwMessage(userID) {
 }
 
 function createGetUntranslatedMessagesButton(userID) {
-    return [inlineKeyboardButton(
+    return inlineKeyboardButton(
         i18n(getLanguageCode(userID), "tgbot-load-messages"),
         callbackPrefixes.LOAD_UNTRANSLATED
-    )];
+    );
 }
 
 function advanceMwMessage(userID) {
@@ -305,7 +305,9 @@ function advanceMwMessage(userID) {
         user.loadedMwMessages = [];
 
         // Prepare the fetch untranslated button
-        const inlineKeyboard = createGetUntranslatedMessagesButton(userID);
+        const inlineKeyboard = [
+            createGetUntranslatedMessagesButton(userID)
+        ];
 
         const tgMsgOptions = {
             reply_markup: JSON.stringify({
@@ -580,7 +582,9 @@ tgBot.onText(/^([^\/].*)/, (tgMsg, match) => {
         languageCode = getLanguageCode(userID);
     }
 
-    const inlineKeyboard = createGetUntranslatedMessagesButton();
+    const inlineKeyboard = [
+        createGetUntranslatedMessagesButton()
+    ];
 
     const tgMsgOptions = {
         reply_markup: JSON.stringify({
