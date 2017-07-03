@@ -56,6 +56,7 @@ function debug(fromId, info, levelRequired) {
 
 const REDIRECT_LANGUAGES = {
     "en-us": "en",
+    "he-il": "he",
     "iw-il": "he",
     "iw": "he"
 };
