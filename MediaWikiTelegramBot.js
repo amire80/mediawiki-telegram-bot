@@ -25,8 +25,6 @@ for (let i = 0; i < callbackActionsKeys.length; i++) {
     callbackActions[callbackPrefixes[callbackActionsKeys[i]]] = callbackActionsKeys[i];
 }
 
-console.log(callbackActions);
-
 function callbackString(action, params) {
     const json = { action, params };
     return JSON.stringify(json);
