@@ -14,5 +14,5 @@
 	"tgbot-the-current-translation-is": "The current translation is:",
 	"tgbot-skip-current-message": "Skip translating this message",
 	"tgbot-no-untranslated-messages-left": "No more messages to translate. Please fetch more.",
-	"tgbot-next-message": "The next untranslated message is: "
+	"tgbot-next-message": "The next message to translate is:"
 }

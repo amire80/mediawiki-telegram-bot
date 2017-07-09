@@ -6,10 +6,13 @@
 	},
 	"tgbot-what-would-you-like-prompt": "מה תרצה לעשות?",
 	"tgbot-load-messages": "לטעון הודעות לתרגום",
-	"tgbot-get-documentation": "הצגת תיעוד",
 	"tgbot-your-language-is": "השפה שלך היא:",
 	"tgbot-automatically-setting-your-language": "השפה שלך מוגדרת באופן אוטומטי ל:",
 	"tgbot-to-change-your-language": "כדי לשנות את השפה שלך, יש להריץ את הפקודה /setlanguage",
+	"tgbot-get-documentation": "הצגת תיעוד",
 	"tgbot-show-translations-of-similar": "הצגת תרגומים של הודעת דומות",
-	"tgbot-the-current-translation-is": "התרגום הנוכחי הוא:"
+	"tgbot-the-current-translation-is": "התרגום הנוכחי הוא:",
+	"tgbot-skip-current-message": "לדלג על ההודעה הזאת",
+	"tgbot-no-untranslated-messages-left": "אין עוד הודעות לתרגם. נא לאחזר עוד.",
+	"tgbot-next-message": "ההודעה הבאה לתרגום היא:"
 }
