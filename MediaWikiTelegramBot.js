@@ -227,6 +227,23 @@ function loadUserFromDbByTgMsg(tgMsg, cb) {
     });
 }
 
+function whenUserLoaded(tgMsg, cb) {
+    const userID = tgMsg.from.id;
+
+    console.log(`in whenUserLoaded, userID ${userID}`);
+
+    if (userKnown(userID)) {
+        console.log("user known");
+
+        cb();
+
+        return;
+    }
+
+    console.log("user not known");
+    loadUserFromDbByTgMsg(tgMsg, cb);
+}
+
 // Returns true if the parameter contains
 // a string that can be sent to Telegram.
 function validTgMessage(tgMsg) {
@@ -679,6 +696,9 @@ function processSlashlessTgMessage(tgMsg) {
     const user = getUser(userID);
     const targetMwMessage = getCurrentMwMessage(userID);
 
+    console.log("Processing slashless message for");
+    console.log(user);
+
     if (user.mode === TRANSLATING_MODE &&
         targetMwMessage !== null
     ) {
@@ -724,7 +744,7 @@ tgBot.onText(/^([^\/].*)/, (tgMsg) => {
     console.log("In slashless onText");
     console.log(tgMsg);
 
-    loadUserFromDbByTgMsg(tgMsg, () => {
+    whenUserLoaded(tgMsg, () => {
         processSlashlessTgMessage(tgMsg);
     });
 });
