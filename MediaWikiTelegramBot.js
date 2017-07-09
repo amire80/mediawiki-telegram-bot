@@ -61,10 +61,11 @@ function userKnown(userID) {
 
 function initUser(userID) {
     userStatus[userID] = {
-        languageCode: "",
         currentMwMessageIndex: 0,
         loadedMwMessages: [],
-        publishingTgMessages: {}
+        loadedTranslationMemory: {},
+        publishingTgMessages: {},
+        languageCode: ""
     };
 }
 
@@ -91,6 +92,21 @@ function normalizeLanguageCode(code) {
     const lower = code.toLowerCase();
 
     return REDIRECT_LANGUAGES[lower] || lower;
+}
+
+function cacheTranslationMemory(userID, targetMwMessage, i, text) {
+    const user = getUser(userID);
+    const title = targetMwMessage.title;
+
+    if (user.loadedTranslationMemory[title] === undefined) {
+        user.loadedTranslationMemory[title] = [];
+    }
+
+    user.loadedTranslationMemory[title][i] = text;
+}
+
+function getCachedTranslationMemory(userID, targetMwMessage) {
+    return getUser(userID).loadedTranslationMemory[targetMwMessage.title];
 }
 
 function addUserToDbByTgMsg(tgMsg, cb) {
@@ -297,6 +313,7 @@ function showTranslationMemory(userID) {
     const title = targetMwMessage.title;
     debug(userID, `Getting translation memory for "${title}"`, 1);
 
+    // TODO Check if it's already cached
     mwApi.getTranslationMemory(title, (translationMemory) => {
         let i;
 
@@ -309,9 +326,14 @@ function showTranslationMemory(userID) {
         }
 
         for (i = 0; i < translationMemory.length; i++) {
+            cacheTranslationMemory(userID, targetMwMessage, i, translationMemory[i].target);
+        }
+
+        const ttmCache = getCachedTranslationMemory(userID, targetMwMessage);
+        for (i = 0; i < ttmCache.length; i++) {
             tgBot.sendMessage(
                 userID,
-                translationMemory[i].target
+                ttmCache[i]
             );
         }
     });
@@ -380,6 +402,7 @@ function showCurrentMwMessage(userID) {
             );
             tgBot.sendMessage(userID, targetMwMessage.translation);
         }
+
         const user = getUser(userID);
         user.mode = TRANSLATING_MODE;
     });
