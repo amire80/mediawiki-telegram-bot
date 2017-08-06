@@ -11,6 +11,7 @@
 	"tgbot-to-change-your-language": "כדי לשנות את השפה שלך, יש להריץ את הפקודה /setlanguage",
 	"tgbot-get-documentation": "הצגת תיעוד",
 	"tgbot-show-translations-of-similar": "הצגת תרגומים של הודעת דומות",
+	"tgbot-submit-this-translation": "שליחת התרגום הזה",
 	"tgbot-the-current-translation-is": "התרגום הנוכחי הוא:",
 	"tgbot-skip-current-message": "לדלג על ההודעה הזאת",
 	"tgbot-no-untranslated-messages-left": "אין עוד הודעות לתרגם. נא לאחזר עוד.",
