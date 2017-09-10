@@ -39,6 +39,7 @@ Patches:
 
 * Justin Du
 * Taras Bunyk
+* Anna Derzaev
 
 Inspiration, support, ideas:
 
